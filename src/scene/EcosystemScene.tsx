@@ -51,7 +51,7 @@ const SPECIES_ANCHORS: Record<string, [number, number]> = {
   grass: [3.8, 0.2], invasive_plant: [6.5, -0.4],
 };
 
-function Selectable({ id, selected, hinted = false, children, onSelect, label, labelHeight = 1.5 }: {
+function Selectable({ id, selected, hinted = false, children, onSelect, label, labelHeight = 1.5, hitTarget }: {
   id: string;
   selected: boolean;
   hinted?: boolean;
@@ -59,16 +59,21 @@ function Selectable({ id, selected, hinted = false, children, onSelect, label, l
   onSelect: (id: string) => void;
   label: string;
   labelHeight?: number;
+  hitTarget?: AnimalHitTarget;
 }) {
   const [hovered, setHovered] = useState(false);
   const click = (event: ThreeEvent<MouseEvent>) => { event.stopPropagation(); onSelect(id); };
   return (
     <group
-      onClick={click}
+      onClick={hitTarget ? undefined : click}
       onPointerOver={(event) => { event.stopPropagation(); setHovered(true); document.body.style.cursor = "pointer"; }}
       onPointerOut={() => { setHovered(false); document.body.style.cursor = "default"; }}
       scale={selected ? 1.07 : hovered || hinted ? 1.035 : 1}
     >
+      {hitTarget && <mesh position={hitTarget.position} scale={hitTarget.scale} onClick={click}>
+        <sphereGeometry args={[1, 12, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
+      </mesh>}
       {children}
       {hinted && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}><torusGeometry args={[0.72, 0.035, 6, 28]} /><meshBasicMaterial color="#e3f7a8" transparent opacity={0.82} /></mesh>}
       {(selected || hovered || hinted) && (
@@ -79,6 +84,26 @@ function Selectable({ id, selected, hinted = false, children, onSelect, label, l
     </group>
   );
 }
+
+type AnimalHitTarget = {
+  position: [number, number, number];
+  scale: [number, number, number];
+};
+
+const animalHitTarget = (kind: FaunaSpawn["kind"]): AnimalHitTarget => {
+  switch (kind) {
+    case "ray": return { position: [-0.55, 0.08, 0], scale: [1.75, 0.34, 0.92] };
+    case "turtle": return { position: [0.16, 0.4, 0], scale: [1.12, 0.62, 0.9] };
+    case "seahorse": return { position: [0.08, 0.4, 0], scale: [0.68, 1.05, 0.54] };
+    case "jellyfish": return { position: [0, 0.02, 0], scale: [0.86, 0.86, 0.86] };
+    case "octopus": return { position: [0, 0.32, 0], scale: [0.96, 0.68, 0.96] };
+    case "fish":
+    case "catfish":
+    case "shark":
+    case "dolphin": return { position: [0, 0, 0], scale: [1.12, 0.48, 0.58] };
+    default: return { position: [0, 1.05, 0], scale: [0.95, 1.15, 0.78] };
+  }
+};
 
 function TerrainIsland({ biome, vegetation, habitatLoss }: { biome: BiomeConfig; vegetation: number; habitatLoss: number }) {
   const geometry = useMemo(() => createTerrainGeometry(biome), [biome]);
@@ -543,8 +568,9 @@ function AnimalActor({ biome, spawn, instanceIndex, population, selectedId, focu
       root.current.position.x = x;
       root.current.position.z = z;
       root.current.rotation.y = -Math.atan2(dz, dx);
-      root.current.rotation.x = spawn.kind === "jellyfish" || spawn.kind === "seahorse" ? 0 : Math.sin(t * 0.84 + phase) * 0.035;
-      root.current.rotation.z = spawn.kind === "jellyfish" || spawn.kind === "seahorse" || spawn.kind === "octopus" ? 0 : THREE.MathUtils.clamp(Math.sin(t * 0.92) * 0.1 + Math.atan2(dz, dx) * 0.018, -0.16, 0.16);
+      const stableUnderwater = ["ray", "turtle", "jellyfish", "seahorse", "octopus"].includes(spawn.kind);
+      root.current.rotation.x = stableUnderwater ? 0 : Math.sin(t * 0.84 + phase) * 0.035;
+      root.current.rotation.z = stableUnderwater ? 0 : THREE.MathUtils.clamp(Math.sin(t * 0.92) * 0.06 + Math.atan2(dz, dx) * 0.012, -0.1, 0.1);
       return;
     }
 
@@ -594,7 +620,7 @@ function AnimalActor({ biome, spawn, instanceIndex, population, selectedId, focu
   const labelHeight = ["elephant", "bear", "yak"].includes(spawn.kind) ? 2.9 : ["deer", "pronghorn", "gazelle", "caribou", "brocket", "musk-deer"].includes(spawn.kind) ? 2.55 : ["turtle", "ray", "shark", "dolphin"].includes(spawn.kind) ? 1.55 : 1.7;
   return (
     <group ref={root} position={base} scale={displayScale}>
-      <Selectable id={spawn.role} label={spawn.label} selected={selectedId === spawn.role} hinted={focusId === spawn.role && instanceIndex === 0} onSelect={onSelect} labelHeight={labelHeight}>
+      <Selectable id={spawn.id} label={spawn.label} selected={selectedId === spawn.id || selectedId === spawn.role} hinted={focusId === spawn.role && instanceIndex === 0} onSelect={onSelect} labelHeight={labelHeight} hitTarget={animalHitTarget(spawn.kind)}>
         <AnimalModel kind={spawn.kind} primary={spawn.primary ?? species.primary} secondary={spawn.secondary ?? species.secondary} seed={behaviorSeed + instanceIndex} simplified={instanceIndex > 0} />
       </Selectable>
     </group>
@@ -611,8 +637,10 @@ function InvasiveCluster({ biome, selectedId, onSelect }: { biome: BiomeConfig; 
 
 function World({ biome, metrics, populations, pollution, drought, habitatLoss, invasive, selectedId, connectionIds, focusId, onSelect }: Props) {
   const haze = pollution / 100;
-  const connectionStart = selectedId ? speciesPosition(biome, selectedId, drought) : null;
   const faunaProfile = getBiomeFauna(biome.id);
+  const selectedFauna = faunaProfile.spawns.find((spawn) => spawn.id === selectedId);
+  const selectedNetworkId = selectedFauna?.role ?? selectedId;
+  const connectionStart = selectedNetworkId ? speciesPosition(biome, selectedNetworkId, drought) : null;
   const fogColor = new THREE.Color(biome.palette.fog).lerp(new THREE.Color("#85857a"), haze * 0.58);
   return (
     <>

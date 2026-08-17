@@ -66,6 +66,9 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(earth, /function RegionBeacon/);
   assert.match(earth, /const EARTH_SCALE = 0\.84/);
   assert.match(earth, /scale=\{EARTH_SCALE\}/);
+  assert.match(earth, /targetPitch\.current = Math\.atan2\(point\.y, horizontalDistance\)/);
+  assert.match(earth, /<group ref=\{pitchGroup\}/);
+  assert.match(earth, /<group ref=\{yawGroup\}/);
   assert.doesNotMatch(earth, /<Html transform/);
   assert.match(styles, /width: min\(530px, 88%\)/);
   assert.equal(model.subarray(0, 4).toString("utf8"), "glTF");
@@ -205,13 +208,15 @@ test("ships a conversational field guide that can explain and change the ecosyst
 });
 
 test("ships conversational controls and a resilient species selection path", async () => {
-  const [interventions, app, panel, guide, rail, scene] = await Promise.all([
+  const [interventions, app, panel, guide, rail, scene, fauna, styles] = await Promise.all([
     import("../src/data/interventions.ts"),
     readFile(new URL("../src/NatureverseApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/SpeciesPanel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/FieldGuideChat.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/SpeciesRail.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/scene/EcosystemScene.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/data/biomeFauna.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   for (const intervention of Object.values(interventions.BIOME_INTERVENTIONS)) {
@@ -226,6 +231,11 @@ test("ships conversational controls and a resilient species selection path", asy
   assert.match(app, /type Drawer = "chat" \| "conditions" \| "explore" \| "metrics" \| null/);
   assert.match(app, /type SidePanel = "chat" \| "conditions" \| null/);
   assert.match(app, /chatReset/);
+  assert.match(app, /const selectedFauna = useMemo/);
+  assert.match(app, /const selectedNetworkId = selectedFauna\?\.role \?\? selectedId/);
+  assert.match(app, /name: selectedFauna\?\.label/);
+  assert.match(app, /className="world-health"/);
+  assert.doesNotMatch(app, /natureverse-header/);
   assert.match(app, /idPrefix="desktop-field-guide"/);
   assert.match(app, /idPrefix="mobile-field-guide"/);
   assert.match(app, /world-tool-rail/);
@@ -240,4 +250,8 @@ test("ships conversational controls and a resilient species selection path", asy
   assert.match(rail, /aria-pressed/);
   assert.doesNotMatch(scene, /<Selectable id="river"/, "water geometry must not intercept visible animal clicks");
   assert.match(scene, /raycast=\{\(\) => undefined\}/, "transparent water must not block the underlying animal raycast");
+  assert.match(scene, /<Selectable id=\{spawn\.id\}/, "a clicked creature must keep its unique fauna ID");
+  assert.match(scene, /const animalHitTarget/, "small underwater models need a practical hit target");
+  assert.match(fauna, /id: "moon-jellies"[\s\S]*scientificName: "Aurelia aurita"/);
+  assert.match(styles, /\.world-health/);
 });

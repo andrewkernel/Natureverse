@@ -57,6 +57,9 @@ export type FaunaSpawn = {
   height: number;
   primary?: string;
   secondary?: string;
+  scientificName?: string;
+  category?: string;
+  habitat?: string;
   ecologicalBeat: string;
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Activity, CloudSun, Compass, Globe2, Leaf, MessageCircle, RotateCcw, Search, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Activity, CloudSun, Compass, Globe2, Leaf, MessageCircle, Search, Sparkles, X } from "lucide-react";
 import { EcosystemScene } from "./scene/EcosystemScene";
 import { MetricsPanel, type EcosystemMetrics, type MetricStatus } from "./components/MetricsPanel";
 import { SpeciesPanel, type SpeciesDetails } from "./components/SpeciesPanel";
@@ -12,6 +12,7 @@ import { ConditionsPanel } from "./components/ConditionsPanel";
 import { SpeciesRail } from "./components/SpeciesRail";
 import { FieldGuideChat } from "./components/FieldGuideChat";
 import { NatureverseLaunch } from "./components/NatureverseLaunch";
+import { getBiomeFauna } from "./data/biomeFauna";
 import { getConnections, healthStatus, relationships, species } from "./engine/ecosystemEngine";
 import { useEcosystemStore } from "./store/ecosystemStore";
 import type { SimulationControls } from "./types/ecosystem";
@@ -49,9 +50,11 @@ export default function NatureverseApp() {
   const [launchPhase, setLaunchPhase] = useState<LaunchPhase>("loading");
   const [launchProgress, setLaunchProgress] = useState(0);
   const [startBiomeId, setStartBiomeId] = useState<BiomeId | null>(null);
-  const experienceHeaderRef = useRef<HTMLElement>(null);
+  const worldHealthRef = useRef<HTMLElement>(null);
   const activeBiome = getBiome(activeBiomeId);
   const status = healthStatus(result.metrics.overallHealth);
+  const selectedFauna = useMemo(() => selectedId ? getBiomeFauna(activeBiomeId).spawns.find((spawn) => spawn.id === selectedId) : undefined, [activeBiomeId, selectedId]);
+  const selectedNetworkId = selectedFauna?.role ?? selectedId;
 
   useEffect(() => {
     const startedAt = performance.now();
@@ -79,16 +82,9 @@ export default function NatureverseApp() {
     if (changes.invasiveSpecies !== undefined) setControl("invasiveSpecies", changes.invasiveSpecies);
   }, [setControl]);
 
-  const handleReset = () => {
-    setSelectedId(null);
-    setDrawer(null);
-    setSidePanel(null);
-    setChatReset((current) => current + 1);
-    reset();
-  };
-
   const resetConditions = () => {
     setSelectedId(null);
+    setChatReset((current) => current + 1);
     reset();
   };
 
@@ -110,7 +106,7 @@ export default function NatureverseApp() {
     if (!startBiomeId) return;
     handleBiomeChange(startBiomeId);
     setLaunchPhase("exploring");
-    window.requestAnimationFrame(() => experienceHeaderRef.current?.focus());
+    window.requestAnimationFrame(() => worldHealthRef.current?.focus());
   };
 
   const handleSpeciesSelect = (id: string | null) => setSelectedId(id);
@@ -125,34 +121,34 @@ export default function NatureverseApp() {
   }, [activeBiome]);
 
   const selectedSpecies: SpeciesDetails | null = useMemo(() => {
-    if (!selectedId) return null;
-    const definition = species.find((item) => item.id === selectedId);
+    if (!selectedNetworkId) return null;
+    const definition = species.find((item) => item.id === selectedNetworkId);
     if (!definition) return null;
-    const biomeSpecies = selectedId in activeBiome.species ? activeBiome.species[selectedId as SpeciesRole] : null;
-    const connections = getConnections(selectedId);
+    const biomeSpecies = selectedNetworkId in activeBiome.species ? activeBiome.species[selectedNetworkId as SpeciesRole] : null;
+    const connections = getConnections(selectedNetworkId);
     return {
-      id: definition.id,
-      name: biomeSpecies?.name ?? displaySpeciesName(selectedId),
-      scientificName: biomeSpecies?.scientificName ?? definition.scientificName,
-      category: biomeSpecies?.category ?? definition.type,
-      habitat: biomeSpecies?.habitat ?? activeBiome.location,
+      id: selectedFauna?.id ?? definition.id,
+      name: selectedFauna?.label ?? biomeSpecies?.name ?? displaySpeciesName(selectedNetworkId),
+      scientificName: selectedFauna ? selectedFauna.scientificName : biomeSpecies?.scientificName ?? definition.scientificName,
+      category: selectedFauna ? selectedFauna.category : biomeSpecies?.category ?? definition.type,
+      habitat: selectedFauna ? selectedFauna.habitat ?? activeBiome.location : biomeSpecies?.habitat ?? activeBiome.location,
       icon: iconForSpecies(definition.type),
       accent: biomeSpecies ? speciesAccent[biomeSpecies.id] : definition.accent,
       role: biomeSpecies?.role ?? definition.role,
-      roleDescription: biomeSpecies?.description ?? definition.roleDescription,
-      status: healthStatus(result.populations[definition.id] ?? 0),
-      health: result.populations[definition.id] ?? 0,
-      population: Math.round(result.populations[definition.id] ?? 0) + "% of healthy baseline",
-      description: biomeSpecies?.description ?? definition.description,
-      dependencies: connections.filter((item) => item.target === selectedId).map((item) => ({ id: item.source, name: displaySpeciesName(item.source), detail: item.label, status: healthStatus(result.populations[item.source] ?? 0) })),
-      supports: connections.filter((item) => item.source === selectedId).map((item) => ({ id: item.target, name: displaySpeciesName(item.target), detail: item.label, status: healthStatus(result.populations[item.target] ?? 0) })),
+      roleDescription: selectedFauna?.ecologicalBeat ?? biomeSpecies?.description ?? definition.roleDescription,
+      status: healthStatus(result.populations[selectedNetworkId] ?? 0),
+      health: result.populations[selectedNetworkId] ?? 0,
+      population: Math.round(result.populations[selectedNetworkId] ?? 0) + "% of healthy baseline",
+      description: selectedFauna?.ecologicalBeat ?? biomeSpecies?.description ?? definition.description,
+      dependencies: connections.filter((item) => item.target === selectedNetworkId).map((item) => ({ id: item.source, name: displaySpeciesName(item.source), detail: item.label, status: healthStatus(result.populations[item.source] ?? 0) })),
+      supports: connections.filter((item) => item.source === selectedNetworkId).map((item) => ({ id: item.target, name: displaySpeciesName(item.target), detail: item.label, status: healthStatus(result.populations[item.target] ?? 0) })),
     };
-  }, [activeBiome, displaySpeciesName, result.populations, selectedId]);
+  }, [activeBiome, displaySpeciesName, result.populations, selectedFauna, selectedNetworkId]);
 
   const connectionIds = useMemo(() => {
-    if (!selectedId) return [];
-    return relationships.filter((item) => item.source === selectedId || item.target === selectedId).map((item) => item.source === selectedId ? item.target : item.source);
-  }, [selectedId]);
+    if (!selectedNetworkId) return [];
+    return relationships.filter((item) => item.source === selectedNetworkId || item.target === selectedNetworkId).map((item) => item.source === selectedNetworkId ? item.target : item.source);
+  }, [selectedNetworkId]);
 
   const focalSpecies = useMemo(() => activeBiome.focalSpecies.map((id) => ({ id, item: activeBiome.species[id], health: result.populations[id] ?? 0 })), [activeBiome, result.populations]);
 
@@ -182,25 +178,18 @@ export default function NatureverseApp() {
 
       <div className="experience-interface" inert={launchPhase !== "exploring"} aria-hidden={launchPhase !== "exploring"}>
         <div className="top-vignette" aria-hidden="true" />
-        <header className="natureverse-header" ref={experienceHeaderRef} tabIndex={-1}>
-        <div className="brand-lockup">
-          <div className="brand-mark"><Leaf size={18} strokeWidth={2.3} /></div>
-          <div><div className="brand-name">Nature<span>verse</span></div><p>{activeBiome.location} · {activeBiome.tagline}</p></div>
-        </div>
-        <div className="header-health" aria-label={"Ecosystem health " + Math.round(result.metrics.overallHealth) + " percent, " + status}>
-          <div className="health-orbit" style={{ "--health": String(result.metrics.overallHealth * 3.6) + "deg" } as CSSProperties}><span>{Math.round(result.metrics.overallHealth)}</span></div>
-          <div><small>Ecosystem health</small><strong>{status}</strong></div>
-        </div>
-        <div className="header-actions">
-          <button type="button" onClick={() => setAtlasOpen(true)} aria-label="Open world atlas" title="Open world atlas"><Globe2 size={17} /></button>
-          <button type="button" onClick={handleReset} aria-label="Reset conditions" title="Reset conditions"><RotateCcw size={17} /></button>
-        </div>
-        </header>
+        <section className="world-health" ref={worldHealthRef} tabIndex={-1} aria-label={"Ecosystem health " + Math.round(result.metrics.overallHealth) + " percent, " + status}>
+          <strong>{Math.round(result.metrics.overallHealth)}</strong>
+          <span><small>Ecosystem health</small><b>{status}</b></span>
+        </section>
 
         {atlasOpen && <BiomeAtlas biomes={BIOMES} activeId={activeBiomeId} onChange={(id) => { handleBiomeChange(id); setAtlasOpen(false); }} onClose={() => setAtlasOpen(false)} />}
         <BiomeSwitcher biomes={BIOMES.map((biome) => ({ id: biome.id, name: biome.name, shortLabel: biome.shortLabel, location: biome.location, iconKey: biome.iconKey, accent: biome.palette.accent }))} activeId={activeBiomeId} onChange={handleBiomeChange} />
 
         <aside className="world-tool-rail" aria-label="Field tools">
+          <button type="button" onClick={() => setAtlasOpen(true)} aria-label="Open world atlas" title="Open world atlas">
+            <Globe2 size={17} /><span>Atlas</span>
+          </button>
           <button type="button" className={sidePanel === "chat" ? "active" : ""} onClick={() => setSidePanel(sidePanel === "chat" ? null : "chat")} aria-pressed={sidePanel === "chat"}>
             <MessageCircle size={17} /><span>Field Guide</span>
           </button>

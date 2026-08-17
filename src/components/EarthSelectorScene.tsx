@@ -12,6 +12,8 @@ const EARTH_CENTER: [number, number, number] = [0.0512, -1.0961, -0.003];
 const MARKER_RADIUS = 1.09;
 const EARTH_SCALE = 0.84;
 
+// [latitude, longitude] field coordinates. These are converted directly onto
+// the Earth surface instead of being hand-positioned in screen space.
 const coordinates: Record<BiomeId, [number, number]> = {
   "temperate-rainforest": [45.52, -122.68],
   "desert-oasis": [31.8, -112.3],
@@ -77,15 +79,20 @@ function RegionBeacon({ biome, selected, onSelect }: { biome: BiomeConfig; selec
 }
 
 function InteractiveEarth({ biomes, selectedBiomeId, onSelectBiome, dragXRef, isDraggingRef }: Props & { dragXRef: MutableRefObject<number>; isDraggingRef: MutableRefObject<boolean> }) {
-  const globe = useRef<THREE.Group>(null);
+  const pitchGroup = useRef<THREE.Group>(null);
+  const yawGroup = useRef<THREE.Group>(null);
   const yaw = useRef(0);
+  const pitch = useRef(-0.1);
   const targetYaw = useRef(0);
+  const targetPitch = useRef(-0.1);
   const holdUntil = useRef(0);
 
   useEffect(() => {
     if (!selectedBiomeId) return;
     const point = pointForLocation(coordinates[selectedBiomeId]);
+    const horizontalDistance = Math.hypot(point.x, point.z);
     targetYaw.current = Math.atan2(-point.x, point.z);
+    targetPitch.current = Math.atan2(point.y, horizontalDistance);
     holdUntil.current = performance.now() + 4200;
   }, [selectedBiomeId]);
 
@@ -98,13 +105,17 @@ function InteractiveEarth({ biomes, selectedBiomeId, onSelectBiome, dragXRef, is
       targetYaw.current += delta * 0.045;
     }
     yaw.current += (targetYaw.current - yaw.current) * Math.min(1, delta * 4.8);
-    if (globe.current) globe.current.rotation.set(-0.1, yaw.current, 0.06);
+    pitch.current += (targetPitch.current - pitch.current) * Math.min(1, delta * 4.8);
+    if (yawGroup.current) yawGroup.current.rotation.y = yaw.current;
+    if (pitchGroup.current) pitchGroup.current.rotation.x = pitch.current;
   });
 
   return (
-    <group ref={globe} scale={EARTH_SCALE}>
-      <PlanetMesh />
-      {biomes.map((biome) => <RegionBeacon biome={biome} key={biome.id} selected={biome.id === selectedBiomeId} onSelect={() => onSelectBiome(biome.id)} />)}
+    <group ref={pitchGroup} scale={EARTH_SCALE}>
+      <group ref={yawGroup}>
+        <PlanetMesh />
+        {biomes.map((biome) => <RegionBeacon biome={biome} key={biome.id} selected={biome.id === selectedBiomeId} onSelect={() => onSelectBiome(biome.id)} />)}
+      </group>
     </group>
   );
 }
@@ -134,7 +145,7 @@ export function EarthSelectorScene({ biomes, selectedBiomeId, onSelectBiome }: P
 
   return (
     <div className="earth-selector-canvas" aria-label="Interactive Earth with seven marked Natureverse field sites" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={stopDragging} onPointerCancel={stopDragging}>
-      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0.16, 4.15], fov: 33, near: 0.1, far: 20 }} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={({ gl }) => { gl.outputColorSpace = THREE.SRGBColorSpace; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08; }}>
+      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4.15], fov: 33, near: 0.1, far: 20 }} gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} onCreated={({ gl }) => { gl.outputColorSpace = THREE.SRGBColorSpace; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.08; }}>
         <ambientLight intensity={1.7} />
         <directionalLight position={[4, 3, 5]} intensity={2.2} color="#fff7d0" />
         <directionalLight position={[-4, -1, -3]} intensity={0.35} color="#79cce1" />

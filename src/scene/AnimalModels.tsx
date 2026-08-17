@@ -559,12 +559,12 @@ function CrocodileModel({ primary, secondary }: ModelProps) {
   </group>;
 }
 
-function SeahorseModel({ primary, secondary, seed = 0 }: ModelProps) {
+function SeahorseModel({ primary, secondary }: ModelProps) {
   const root = useRef<THREE.Group>(null);
   const curve = useMemo(() => new THREE.CatmullRomCurve3([
     new THREE.Vector3(0.1, 0.75, 0), new THREE.Vector3(-0.1, 0.38, 0), new THREE.Vector3(0.04, 0.02, 0), new THREE.Vector3(-0.18, -0.2, 0), new THREE.Vector3(-0.04, -0.4, 0), new THREE.Vector3(0.18, -0.34, 0),
   ]), []);
-  useFrame(({ clock }) => { if (root.current) root.current.rotation.z = Math.sin(clock.elapsedTime * 0.7 + seed) * 0.08; });
+  useFrame(() => { if (root.current) root.current.rotation.z = 0; });
   return <group ref={root}>
     <mesh><tubeGeometry args={[curve, 28, 0.11, 8, false]} />{material(primary, 0.64)}</mesh>
     <mesh position={[0.2, 0.85, 0]} scale={[0.42, 0.34, 0.3]}><sphereGeometry args={[0.45, 18, 12]} />{material(primary, 0.62)}</mesh>
@@ -624,7 +624,7 @@ function TurtleModel({ primary, secondary, seed = 0, variant = "turtle" }: Model
   );
 }
 
-function RayModel({ primary, secondary, seed = 0 }: ModelProps) {
+function RayModel({ primary, secondary }: ModelProps) {
   const root = useRef<THREE.Group>(null);
   const shape = useMemo(() => {
     const s = new THREE.Shape();
@@ -637,8 +637,8 @@ function RayModel({ primary, secondary, seed = 0 }: ModelProps) {
   const tailCurve = useMemo(() => new THREE.CatmullRomCurve3([
     new THREE.Vector3(-0.78, 0, 0), new THREE.Vector3(-1.4, -0.03, 0.05), new THREE.Vector3(-2.1, 0.05, -0.08), new THREE.Vector3(-2.7, 0, 0),
   ]), []);
-  useFrame(({ clock }) => {
-    if (root.current) root.current.rotation.z = Math.sin(clock.elapsedTime * 1.4 + seed) * 0.06;
+  useFrame(() => {
+    if (root.current) root.current.rotation.z = 0;
   });
   return (
     <group ref={root}>

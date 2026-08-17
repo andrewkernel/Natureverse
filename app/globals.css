@@ -67,6 +67,34 @@ button {
   background: linear-gradient(180deg, rgba(10, 24, 18, 0.56), rgba(10, 24, 18, 0));
 }
 
+.world-health {
+  position: absolute;
+  z-index: 10;
+  top: 18px;
+  left: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid rgba(235, 249, 225, .16);
+  border-radius: 7px;
+  color: #edf7e8;
+  background: rgba(10, 27, 19, .86);
+}
+
+.world-health > strong {
+  color: #d9f5a8;
+  font-size: 17px;
+  font-weight: 740;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.05em;
+  line-height: 1;
+}
+
+.world-health > span { display: grid; gap: 1px; }
+.world-health small { color: rgba(238, 248, 232, .55); font-size: 8px; font-weight: 650; line-height: 1; letter-spacing: .06em; text-transform: uppercase; }
+.world-health b { color: #edf8e8; font-size: 10px; font-weight: 650; line-height: 1.1; text-transform: capitalize; }
+
 .natureverse-header {
   position: absolute;
   z-index: 10;

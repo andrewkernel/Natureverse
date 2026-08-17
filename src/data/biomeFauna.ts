@@ -16,6 +16,9 @@ type SpawnOptions = {
   height?: number;
   primary?: string;
   secondary?: string;
+  scientificName?: string;
+  category?: string;
+  habitat?: string;
   ecologicalBeat: string;
 };
 
@@ -132,17 +135,17 @@ export const BIOME_FAUNA: Record<BiomeId, BiomeFaunaProfile> = {
     generationSeed: 7701,
     interaction: "A cleaning station, turtle-grazed seagrass, coral shelter, and plankton layers make the reef function as a living city.",
     spawns: [
-      fauna({ id: "green-turtle", role: "deer", label: "Green sea turtle", kind: "turtle", motion: "midwater", anchor: [5.0, 2.25], scale: 0.88, speed: 0.42, radius: [1.25, 0.8], height: 1.15, ecologicalBeat: "Travels between reef and seagrass meadow." }),
-      fauna({ id: "ribbontail-rays", role: "rabbit", label: "Bluespotted ribbontail ray", kind: "ray", motion: "benthic", anchor: [3.35, 3.85], count: 2, spread: 0.9, scale: 0.7, speed: 0.52, radius: [1.0, 0.62], height: 0.28, ecologicalBeat: "Aerates a sandy feeding flat." }),
-      fauna({ id: "manta", role: "bird", label: "Reef manta ray", kind: "ray", motion: "midwater", anchor: [2.4, -2.8], scale: 1.08, speed: 0.34, radius: [2.5, 1.55], height: 2.75, ecologicalBeat: "Returns to a cleaner-fish station." }),
-      fauna({ id: "anemonefish", role: "fish", label: "Clown anemonefish", kind: "fish", motion: "midwater", anchor: [0.25, 2.05], count: 3, spread: 0.34, scale: 0.56, speed: 1.08, radius: [0.62, 0.48], height: 0.88, ecologicalBeat: "Circles its host anemone." }),
-      fauna({ id: "hawksbill", role: "frog", label: "Hawksbill turtle", kind: "turtle", motion: "midwater", anchor: [-1.45, 1.55], scale: 0.72, speed: 0.36, radius: [0.82, 0.54], height: 0.72, ecologicalBeat: "Browses sponges between coral branches." }),
-      fauna({ id: "cleaner-wrasse", role: "bee", label: "Cleaner wrasse", kind: "fish", motion: "midwater", anchor: [-3.55, 1.75], count: 3, spread: 0.34, scale: 0.42, speed: 1.25, radius: [0.52, 0.38], height: 1.3, ecologicalBeat: "Darts around a cleaning station client." }),
-      fauna({ id: "chromis-school", role: "dragonfly", label: "Blue-green chromis", kind: "fish", motion: "midwater", anchor: [-1.1, -0.75], count: 5, spread: 0.78, scale: 0.43, speed: 1.18, radius: [1.25, 0.72], height: 1.85, ecologicalBeat: "Pulses above a branching coral head." }),
-      fauna({ id: "reef-shark", role: "fish", label: "Blacktip reef shark", kind: "shark", motion: "midwater", anchor: [-5.7, -1.5], scale: 0.95, speed: 0.62, radius: [2.1, 1.1], height: 2.05, primary: "#536a72", secondary: "#24343a", ecologicalBeat: "Patrols the outer edge of the nursery." }),
-      fauna({ id: "seahorses", role: "butterfly", label: "Tiger-tail seahorse", kind: "seahorse", motion: "benthic", anchor: [-4.4, 0.55], count: 2, spread: 0.4, scale: 0.58, speed: 0.2, radius: [0.24, 0.2], height: 0.42, primary: "#e8b64d", secondary: "#6b452a", ecologicalBeat: "Anchors to swaying seagrass." }),
-      fauna({ id: "moon-jellies", role: "bird", label: "Moon jelly", kind: "jellyfish", motion: "midwater", anchor: [5.4, -2.9], count: 3, spread: 0.9, scale: 0.62, speed: 0.22, radius: [0.85, 0.7], height: 3.4, primary: "#b5e5e1", secondary: "#9d9ee0", ecologicalBeat: "Drifts through a plankton-rich layer." }),
-      fauna({ id: "reef-octopus", role: "frog", label: "Day octopus", kind: "octopus", motion: "benthic", anchor: [-5.0, 3.35], scale: 0.68, speed: 0.18, radius: [0.35, 0.24], height: 0.08, primary: "#ba6549", secondary: "#e0a05e", ecologicalBeat: "Changes posture beside a coral den." }),
+      fauna({ id: "green-turtle", role: "deer", label: "Green sea turtle", kind: "turtle", motion: "midwater", anchor: [5.0, 2.25], scale: 0.88, speed: 0.42, radius: [1.25, 0.8], height: 1.15, scientificName: "Chelonia mydas", category: "Marine reptile", habitat: "Reef edge and seagrass meadow", ecologicalBeat: "Travels between reef and seagrass meadow." }),
+      fauna({ id: "ribbontail-rays", role: "rabbit", label: "Bluespotted ribbontail ray", kind: "ray", motion: "benthic", anchor: [3.35, 3.85], count: 2, spread: 0.9, scale: 0.7, speed: 0.52, radius: [1.0, 0.62], height: 0.28, scientificName: "Taeniura lymma", category: "Benthic ray", habitat: "Sandy reef flat", ecologicalBeat: "Aerates a sandy feeding flat." }),
+      fauna({ id: "manta", role: "bird", label: "Reef manta ray", kind: "ray", motion: "midwater", anchor: [2.4, -2.8], scale: 1.08, speed: 0.34, radius: [2.5, 1.55], height: 2.75, scientificName: "Mobula alfredi", category: "Pelagic ray", habitat: "Reef cleaning station", ecologicalBeat: "Returns to a cleaner-fish station." }),
+      fauna({ id: "anemonefish", role: "fish", label: "Clown anemonefish", kind: "fish", motion: "midwater", anchor: [0.25, 2.05], count: 3, spread: 0.34, scale: 0.56, speed: 1.08, radius: [0.62, 0.48], height: 0.88, scientificName: "Amphiprion ocellaris", category: "Reef fish", habitat: "Anemone garden", ecologicalBeat: "Circles its host anemone." }),
+      fauna({ id: "hawksbill", role: "frog", label: "Hawksbill turtle", kind: "turtle", motion: "midwater", anchor: [-1.45, 1.55], scale: 0.72, speed: 0.36, radius: [0.82, 0.54], height: 0.72, scientificName: "Eretmochelys imbricata", category: "Marine reptile", habitat: "Sponge-rich coral garden", ecologicalBeat: "Browses sponges between coral branches." }),
+      fauna({ id: "cleaner-wrasse", role: "bee", label: "Cleaner wrasse", kind: "fish", motion: "midwater", anchor: [-3.55, 1.75], count: 3, spread: 0.34, scale: 0.42, speed: 1.25, radius: [0.52, 0.38], height: 1.3, scientificName: "Labroides dimidiatus", category: "Reef fish", habitat: "Coral cleaning station", ecologicalBeat: "Darts around a cleaning station client." }),
+      fauna({ id: "chromis-school", role: "dragonfly", label: "Blue-green chromis", kind: "fish", motion: "midwater", anchor: [-1.1, -0.75], count: 5, spread: 0.78, scale: 0.43, speed: 1.18, radius: [1.25, 0.72], height: 1.85, scientificName: "Chromis viridis", category: "Reef fish", habitat: "Branching coral canopy", ecologicalBeat: "Pulses above a branching coral head." }),
+      fauna({ id: "reef-shark", role: "fish", label: "Blacktip reef shark", kind: "shark", motion: "midwater", anchor: [-5.7, -1.5], scale: 0.95, speed: 0.62, radius: [2.1, 1.1], height: 2.05, primary: "#536a72", secondary: "#24343a", scientificName: "Carcharhinus melanopterus", category: "Reef shark", habitat: "Outer nursery reef", ecologicalBeat: "Patrols the outer edge of the nursery." }),
+      fauna({ id: "seahorses", role: "butterfly", label: "Tiger-tail seahorse", kind: "seahorse", motion: "benthic", anchor: [-4.4, 0.55], count: 2, spread: 0.4, scale: 0.58, speed: 0.2, radius: [0.24, 0.2], height: 0.42, primary: "#e8b64d", secondary: "#6b452a", scientificName: "Hippocampus comes", category: "Syngnathid fish", habitat: "Seagrass holdfast", ecologicalBeat: "Anchors to swaying seagrass." }),
+      fauna({ id: "moon-jellies", role: "bird", label: "Moon jelly", kind: "jellyfish", motion: "midwater", anchor: [5.4, -2.9], count: 3, spread: 0.9, scale: 0.62, speed: 0.22, radius: [0.85, 0.7], height: 3.4, primary: "#b5e5e1", secondary: "#9d9ee0", scientificName: "Aurelia aurita", category: "Jellyfish", habitat: "Plankton-rich water column", ecologicalBeat: "Drifts through a plankton-rich layer." }),
+      fauna({ id: "reef-octopus", role: "frog", label: "Day octopus", kind: "octopus", motion: "benthic", anchor: [-5.0, 3.35], scale: 0.68, speed: 0.18, radius: [0.35, 0.24], height: 0.08, primary: "#ba6549", secondary: "#e0a05e", scientificName: "Octopus cyanea", category: "Cephalopod", habitat: "Coral den", ecologicalBeat: "Changes posture beside a coral den." }),
     ],
   },
 };
