@@ -5,6 +5,7 @@ import { useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, type MutableRefObject, type PointerEvent as ReactPointerEvent } from "react";
 import * as THREE from "three";
+import { FIELD_SITE_COORDINATES } from "../data/fieldSites";
 import type { BiomeConfig, BiomeId } from "../types/biome";
 
 const EARTH_MODEL_URL = "/models/low-poly-planet-earth.glb";
@@ -12,17 +13,7 @@ const EARTH_CENTER: [number, number, number] = [0.0512, -1.0961, -0.003];
 const MARKER_RADIUS = 1.09;
 const EARTH_SCALE = 0.84;
 
-// [latitude, longitude] field coordinates. These are converted directly onto
-// the Earth surface instead of being hand-positioned in screen space.
-const coordinates: Record<BiomeId, [number, number]> = {
-  "temperate-rainforest": [45.52, -122.68],
-  "desert-oasis": [31.8, -112.3],
-  savanna: [-1.29, 36.82],
-  "arctic-tundra": [69.65, -148.72],
-  "amazon-floodplain": [-3.12, -60.02],
-  "alpine-meadow": [27.5, 90.5],
-  "coral-reef": [0.5, 125.2],
-};
+export { FIELD_SITE_COORDINATES } from "../data/fieldSites";
 
 type Props = {
   biomes: BiomeConfig[];
@@ -30,13 +21,14 @@ type Props = {
   onSelectBiome: (id: BiomeId) => void;
 };
 
-const pointForLocation = ([latitude, longitude]: [number, number], radius = MARKER_RADIUS) => {
-  const phi = (90 - latitude) * (Math.PI / 180);
-  const theta = (longitude + 180) * (Math.PI / 180);
+export const pointForLocation = ([latitude, longitude]: [number, number], radius = MARKER_RADIUS) => {
+  const latitudeRadians = THREE.MathUtils.degToRad(latitude);
+  const longitudeRadians = THREE.MathUtils.degToRad(longitude);
+  const horizontalRadius = radius * Math.cos(latitudeRadians);
   return new THREE.Vector3(
-    -radius * Math.sin(phi) * Math.cos(theta),
-    radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.sin(theta),
+    -horizontalRadius * Math.cos(longitudeRadians),
+    radius * Math.sin(latitudeRadians),
+    horizontalRadius * Math.sin(longitudeRadians),
   );
 };
 
@@ -60,7 +52,7 @@ function PlanetMesh() {
 }
 
 function RegionBeacon({ biome, selected, onSelect }: { biome: BiomeConfig; selected: boolean; onSelect: () => void }) {
-  const point = useMemo(() => pointForLocation(coordinates[biome.id]), [biome.id]);
+  const point = useMemo(() => pointForLocation(FIELD_SITE_COORDINATES[biome.id]), [biome.id]);
   const outward = useMemo(() => point.clone().normalize(), [point]);
   const orientation = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), outward), [outward]);
 
@@ -89,7 +81,7 @@ function InteractiveEarth({ biomes, selectedBiomeId, onSelectBiome, dragXRef, is
 
   useEffect(() => {
     if (!selectedBiomeId) return;
-    const point = pointForLocation(coordinates[selectedBiomeId]);
+    const point = pointForLocation(FIELD_SITE_COORDINATES[selectedBiomeId]);
     const horizontalDistance = Math.hypot(point.x, point.z);
     targetYaw.current = Math.atan2(-point.x, point.z);
     targetPitch.current = Math.atan2(point.y, horizontalDistance);

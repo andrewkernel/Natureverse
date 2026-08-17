@@ -3,6 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import type { BiomeStoryEffect } from "../data/biomeStories";
 import type { BiomeConfig } from "../types/biome";
 import { scatterLand, seeded } from "./terrain";
 
@@ -139,11 +140,81 @@ function FloatingWeather({ biome, kind, drought, pollution }: { biome: BiomeConf
   );
 }
 
-export function WeatherAtmosphere({ biome, drought, pollution }: { biome: BiomeConfig; drought: number; pollution: number }) {
+type CinematicMotion = "fall" | "rise" | "sweep" | "drift";
+
+const cinematicProfiles: Record<BiomeStoryEffect, { color: string; count: number; size: number; opacity: number; motion: CinematicMotion; span: number }> = {
+  dawn: { color: "#fff1b6", count: 110, size: 0.11, opacity: 0.38, motion: "rise", span: 16 },
+  rain: { color: "#d7f3f4", count: 260, size: 0.052, opacity: 0.58, motion: "fall", span: 16 },
+  wind: { color: "#e5efd6", count: 150, size: 0.075, opacity: 0.3, motion: "sweep", span: 18 },
+  mist: { color: "#effff1", count: 170, size: 0.22, opacity: 0.12, motion: "drift", span: 16 },
+  canopy: { color: "#d6ef91", count: 140, size: 0.09, opacity: 0.38, motion: "fall", span: 15 },
+  current: { color: "#d1fbf2", count: 190, size: 0.075, opacity: 0.42, motion: "sweep", span: 15 },
+  sand: { color: "#f0c982", count: 210, size: 0.082, opacity: 0.36, motion: "sweep", span: 20 },
+  aurora: { color: "#c4ffd5", count: 170, size: 0.12, opacity: 0.38, motion: "drift", span: 19 },
+  fireflies: { color: "#fff09a", count: 100, size: 0.11, opacity: 0.66, motion: "drift", span: 14 },
+  fire: { color: "#ffbf67", count: 150, size: 0.11, opacity: 0.56, motion: "rise", span: 13 },
+  reef: { color: "#b8ffff", count: 170, size: 0.075, opacity: 0.48, motion: "rise", span: 15 },
+};
+
+function CinematicParticles({ effect }: { effect: BiomeStoryEffect }) {
+  const group = useRef<THREE.Group>(null);
+  const geometryRef = useRef<THREE.BufferGeometry>(null);
+  const { camera } = useThree();
+  const profile = cinematicProfiles[effect];
+  const state = useMemo(() => {
+    const positions = new Float32Array(profile.count * 3);
+    const speeds = new Float32Array(profile.count);
+    for (let index = 0; index < profile.count; index += 1) {
+      positions[index * 3] = (seeded(index, 811) - 0.5) * profile.span;
+      positions[index * 3 + 1] = seeded(index, 812) * 10 - 1.5;
+      positions[index * 3 + 2] = (seeded(index, 813) - 0.5) * profile.span;
+      speeds[index] = 0.45 + seeded(index, 814) * 1.1;
+    }
+    return { positions, speeds };
+  }, [profile.count, profile.span]);
+
+  useFrame(({ clock }, delta) => {
+    if (!group.current || !geometryRef.current) return;
+    const attribute = geometryRef.current.getAttribute("position") as THREE.BufferAttribute;
+    const positions = attribute.array as Float32Array;
+    anchorToView(group.current, camera, effect === "mist" ? 8.7 : 9.6);
+    for (let index = 0; index < profile.count; index += 1) {
+      const offset = index * 3;
+      const speed = state.speeds[index];
+      if (profile.motion === "fall") {
+        positions[offset + 1] -= speed * delta * (effect === "rain" ? 6.2 : 1.35);
+        positions[offset] += (effect === "rain" ? 0.34 : Math.sin(clock.elapsedTime + index) * 0.06) * delta;
+        if (positions[offset + 1] < -1.6) positions[offset + 1] = 10.4;
+      } else if (profile.motion === "rise") {
+        positions[offset + 1] += speed * delta * 0.86;
+        positions[offset] += Math.sin(clock.elapsedTime * 0.75 + index) * delta * 0.12;
+        if (positions[offset + 1] > 10.8) positions[offset + 1] = -1.35;
+      } else if (profile.motion === "sweep") {
+        positions[offset] += speed * delta * 1.48;
+        positions[offset + 2] += Math.sin(clock.elapsedTime * 0.58 + index) * delta * 0.17;
+        if (positions[offset] > profile.span / 2) positions[offset] = -profile.span / 2;
+      } else {
+        positions[offset] += Math.sin(clock.elapsedTime * 0.52 + index * 0.72) * delta * 0.2;
+        positions[offset + 1] += Math.cos(clock.elapsedTime * 0.63 + index) * delta * 0.1;
+      }
+    }
+    attribute.needsUpdate = true;
+  });
+
+  return <group ref={group}>
+    <points frustumCulled={false}>
+      <bufferGeometry ref={geometryRef}><bufferAttribute attach="attributes-position" args={[state.positions, 3]} usage={THREE.DynamicDrawUsage} /></bufferGeometry>
+      <pointsMaterial color={profile.color} size={profile.size} transparent opacity={profile.opacity} depthWrite={false} sizeAttenuation toneMapped={false} />
+    </points>
+  </group>;
+}
+
+export function WeatherAtmosphere({ biome, drought, pollution, cinematicEffect = null }: { biome: BiomeConfig; drought: number; pollution: number; cinematicEffect?: BiomeStoryEffect | null }) {
   const kind = weatherKind(biome);
-  return kind === "rain"
-    ? <RainVolume biome={biome} drought={drought} pollution={pollution} />
-    : <FloatingWeather biome={biome} kind={kind} drought={drought} pollution={pollution} />;
+  return <>
+    {kind === "rain" ? <RainVolume biome={biome} drought={drought} pollution={pollution} /> : <FloatingWeather biome={biome} kind={kind} drought={drought} pollution={pollution} />}
+    {cinematicEffect && <CinematicParticles effect={cinematicEffect} />}
+  </>;
 }
 
 export function WeatherGroundDetails({ biome, drought }: { biome: BiomeConfig; drought: number }) {

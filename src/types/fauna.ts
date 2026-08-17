@@ -11,6 +11,7 @@ export type AnimalVisualKind =
   | "jackrabbit"
   | "hare"
   | "paca"
+  | "slug"
   | "bird"
   | "wren"
   | "roller"
@@ -30,6 +31,11 @@ export type AnimalVisualKind =
   | "ray"
   | "elephant"
   | "canid"
+  | "otter"
+  | "javelina"
+  | "warthog"
+  | "marmot"
+  | "muskox"
   | "bear"
   | "feline"
   | "capybara"
@@ -38,7 +44,8 @@ export type AnimalVisualKind =
   | "crocodile"
   | "seahorse"
   | "jellyfish"
-  | "octopus";
+  | "octopus"
+  | "clam";
 
 export type FaunaMotion = "ground" | "hop" | "flight" | "hover" | "river" | "midwater" | "benthic";
 

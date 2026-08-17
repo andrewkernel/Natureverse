@@ -41,11 +41,12 @@ test("server-renders the Natureverse experience and social metadata", async () =
 });
 
 test("ships a logo wall, model-backed Earth selection, and requires a chosen field site", async () => {
-  const [app, launch, globe, earth, styles, model] = await Promise.all([
+  const [app, launch, globe, earth, fieldSites, styles, model] = await Promise.all([
     readFile(new URL("../src/NatureverseApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/NatureverseLaunch.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/BiomeGlobeLaunch.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/EarthSelectorScene.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/data/fieldSites.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../public/models/low-poly-planet-earth.glb", import.meta.url)),
   ]);
@@ -67,6 +68,11 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(globe, /Jacobs Development/);
   assert.match(globe, /aria-pressed/);
   assert.match(earth, /useGLTF\(EARTH_MODEL_URL\)/);
+  assert.match(earth, /FIELD_SITE_COORDINATES/);
+  assert.match(fieldSites, /Hoh Rain Forest/);
+  assert.match(fieldSites, /Raja Ampat/);
+  assert.doesNotMatch(earth, /longitude \+ 180/);
+  assert.match(earth, /horizontalRadius \* Math\.sin\(longitudeRadians\)/);
   assert.match(earth, /pointForLocation/);
   assert.match(earth, /function RegionBeacon/);
   assert.match(earth, /const EARTH_SCALE = 0\.84/);
@@ -78,6 +84,57 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(styles, /width: min\(530px, 88%\)/);
   assert.equal(model.subarray(0, 4).toString("utf8"), "glTF");
   assert.match(launch, /natureverse-launch-logo\.png/);
+});
+
+test("ships seven timed biome stories, cinematic effects, and a full-screen tagged gallery", async () => {
+  const [{ BIOME_STORIES }, { BIOMES }, { BIOME_FAUNA }, app, cinematic, gallery, scene, weather, atlas, modalFocus] = await Promise.all([
+    import("../src/data/biomeStories.ts"),
+    import("../src/data/biomes.ts"),
+    import("../src/data/biomeFauna.ts"),
+    readFile(new URL("../src/NatureverseApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/BiomeCinematic.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/BiomeGallery.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/scene/EcosystemScene.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/scene/WeatherSystem.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/BiomeAtlas.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/hooks/useModalFocus.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.equal(Object.keys(BIOME_STORIES).length, 7);
+  for (const story of Object.values(BIOME_STORIES)) {
+    assert.equal(story.durationMs, 20000);
+    assert.equal(story.beats.length, 4);
+    assert.equal(story.beats.reduce((total, beat) => total + beat.durationMs, 0), 20000);
+    assert.ok(story.beats.every((beat) => beat.subtitle.length > 24 && beat.effect));
+  }
+
+  assert.match(app, /<BiomeCinematic/);
+  assert.match(app, /<BiomeGallery/);
+  assert.match(app, /openGallery/);
+  assert.match(app, /storyEffect=\{storyEffect\}/);
+  assert.match(cinematic, /role="progressbar"/);
+  assert.match(cinematic, /Story progress/);
+  assert.match(gallery, /galleryItemsForBiome/);
+  assert.match(gallery, /getBiomeFauna\(biome\.id\)\.spawns/);
+  assert.match(gallery, /signatureFlora/);
+  assert.match(gallery, /galleryAnimalScale/);
+  assert.match(gallery, /<AnimalModel/);
+  assert.match(gallery, /role="dialog"/);
+  assert.match(scene, /cinematicEffect=\{storyEffect\}/);
+  assert.match(weather, /function CinematicParticles/);
+  assert.match(weather, /cinematicProfiles/);
+  assert.doesNotMatch(atlas, /Natureverse network/);
+  assert.match(atlas, /FIELD_SITE_COORDINATES/);
+  assert.match(modalFocus, /focusableSelector/);
+  assert.match(app, /atlasOpen \|\| galleryOpen/);
+  assert.match(app, /const floraSelectionIds = \["oak", "fruit_tree", "wildflower"\] as const/);
+  assert.match(app, /name: activeBiome\.signatureFlora\[selectedFloraIndex\]/);
+  for (const biome of BIOMES) {
+    const labels = BIOME_FAUNA[biome.id].spawns.map((spawn) => spawn.label.toLowerCase());
+    for (const ambient of biome.ambientSpecies) {
+      assert.ok(labels.some((label) => label.includes(ambient.toLowerCase()) || ambient.toLowerCase().includes(label)), `${ambient} should be a tagged ${biome.name} specimen`);
+    }
+  }
 });
 
 test("ships data-driven species, relationships, and scenarios", async () => {
@@ -233,7 +290,7 @@ test("ships conversational controls and a resilient species selection path", asy
 
   assert.match(app, /const speciesAccent: Record<SpeciesRole, NonNullable<SpeciesDetails\["accent"\]>>/);
   assert.match(app, /accent: biomeSpecies \? speciesAccent\[biomeSpecies\.id\] : definition\.accent/);
-  assert.match(app, /type Drawer = "chat" \| "conditions" \| "explore" \| "metrics" \| null/);
+  assert.match(app, /type Drawer = "chat" \| "conditions" \| "explore" \| null/);
   assert.match(app, /type SidePanel = "chat" \| "conditions" \| null/);
   assert.match(app, /chatReset/);
   assert.match(app, /const selectedFauna = useMemo/);

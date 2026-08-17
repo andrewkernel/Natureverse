@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { getBiomeFauna } from "../data/biomeFauna";
+import type { BiomeStoryEffect } from "../data/biomeStories";
 import type { BiomeConfig } from "../types/biome";
 import type { FaunaSpawn } from "../types/fauna";
 import { AnimalModel } from "./AnimalModels";
@@ -41,6 +42,7 @@ type Props = {
   selectedId: string | null;
   connectionIds: string[];
   focusId?: string | null;
+  storyEffect?: BiomeStoryEffect | null;
   onSelect: (id: string) => void;
 };
 
@@ -635,7 +637,7 @@ function InvasiveCluster({ biome, selectedId, onSelect }: { biome: BiomeConfig; 
   </Selectable>;
 }
 
-function World({ biome, metrics, populations, pollution, drought, habitatLoss, invasive, selectedId, connectionIds, focusId, onSelect }: Props) {
+function World({ biome, metrics, populations, pollution, drought, habitatLoss, invasive, selectedId, connectionIds, focusId, storyEffect, onSelect }: Props) {
   const haze = pollution / 100;
   const faunaProfile = getBiomeFauna(biome.id);
   const selectedFauna = faunaProfile.spawns.find((spawn) => spawn.id === selectedId);
@@ -651,7 +653,7 @@ function World({ biome, metrics, populations, pollution, drought, habitatLoss, i
       <hemisphereLight args={[biome.palette.skyHorizon, biome.palette.cliff, biome.waterStyle === "ocean" ? 1.75 : 1.25]} />
       <Sky biome={biome} pollution={pollution} />
       <BackgroundWorld biome={biome} pollution={pollution} />
-      <WeatherAtmosphere biome={biome} drought={drought} pollution={pollution} />
+      <WeatherAtmosphere biome={biome} drought={drought} pollution={pollution} cinematicEffect={storyEffect} />
 
       <group rotation={[0, -0.24, 0]}>
         <TerrainIsland biome={biome} vegetation={metrics.vegetation} habitatLoss={habitatLoss} />
@@ -673,7 +675,7 @@ function World({ biome, metrics, populations, pollution, drought, habitatLoss, i
         })}
         <Sparkles count={Math.round(18 + metrics.biodiversity * 0.34)} scale={[14, biome.waterStyle === "ocean" ? 7 : 4.5, 10]} size={1.3} speed={biome.waterStyle === "ocean" ? 0.12 : 0.24} opacity={0.22 + metrics.biodiversity / 260} color={biome.waterStyle === "ocean" ? "#bff7ed" : biome.palette.accent} />
       </group>
-      <OrbitControls makeDefault enablePan={false} minDistance={10} maxDistance={44} minPolarAngle={0.48} maxPolarAngle={1.3} target={[0, biome.terrainStyle === "alpine" ? 0.9 : 0.55, 0]} autoRotate={!selectedId} autoRotateSpeed={0.1} />
+      <OrbitControls makeDefault enablePan={false} enableRotate={!storyEffect} enableZoom={!storyEffect} minDistance={10} maxDistance={44} minPolarAngle={0.48} maxPolarAngle={1.3} target={[0, biome.terrainStyle === "alpine" ? 0.9 : 0.55, 0]} autoRotate={!selectedId || Boolean(storyEffect)} autoRotateSpeed={storyEffect ? 0.34 : 0.1} />
     </>
   );
 }

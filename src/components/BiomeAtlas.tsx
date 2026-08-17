@@ -3,17 +3,9 @@
 import { useEffect, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { Globe2, MapPin, X } from "lucide-react";
+import { FIELD_SITE_COORDINATES } from "../data/fieldSites";
+import { useModalFocus } from "../hooks/useModalFocus";
 import type { BiomeConfig, BiomeId } from "../types/biome";
-
-const coordinates: Record<BiomeId, [number, number]> = {
-  "temperate-rainforest": [45.52, -122.68],
-  "desert-oasis": [31.8, -112.3],
-  savanna: [-1.29, 36.82],
-  "arctic-tundra": [69.65, -148.72],
-  "amazon-floodplain": [-3.12, -60.02],
-  "alpine-meadow": [27.5, 90.5],
-  "coral-reef": [0.5, 125.2],
-};
 
 type Props = {
   biomes: BiomeConfig[];
@@ -23,6 +15,7 @@ type Props = {
 };
 
 export function BiomeAtlas({ biomes, activeId, onChange, onClose }: Props) {
+  const { dialogRef, closeButtonRef } = useModalFocus(onClose);
   const canvas = useRef<HTMLCanvasElement>(null);
   const dragging = useRef<number | null>(null);
   const pointerX = useRef(0);
@@ -57,7 +50,7 @@ export function BiomeAtlas({ biomes, activeId, onChange, onClose }: Props) {
         baseColor: [0.06, 0.18, 0.1],
         glowColor: [0.24, 0.52, 0.3],
         markerColor: [0.74, 0.95, 0.45],
-        markers: biomes.map((biome) => ({ location: coordinates[biome.id], size: biome.id === activeId ? 0.095 : 0.055 })),
+        markers: biomes.map((biome) => ({ location: FIELD_SITE_COORDINATES[biome.id], size: biome.id === activeId ? 0.095 : 0.055 })),
         onRender: (state) => {
           if (dragging.current == null) targetPhi.current += 0.0022;
           phi.current += (targetPhi.current - phi.current) * 0.09;
@@ -93,10 +86,10 @@ export function BiomeAtlas({ biomes, activeId, onChange, onClose }: Props) {
 
   return (
     <div className="atlas-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="atlas-dialog" role="dialog" aria-modal="true" aria-labelledby="atlas-title">
+      <section ref={dialogRef} className="atlas-dialog" role="dialog" aria-modal="true" aria-labelledby="atlas-title">
         <header className="atlas-header">
-          <div className="atlas-heading"><span><Globe2 size={18} /></span><div><small>Natureverse network</small><h2 id="atlas-title">Seven worlds. One living planet.</h2></div></div>
-          <button type="button" onClick={onClose} aria-label="Close world atlas"><X size={18} /></button>
+          <div className="atlas-heading"><span><Globe2 size={18} /></span><div><small>Field atlas</small><h2 id="atlas-title">Seven worlds. One living planet.</h2></div></div>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close world atlas"><X size={18} /></button>
         </header>
         <div className="atlas-body">
           <div className="atlas-globe-wrap">

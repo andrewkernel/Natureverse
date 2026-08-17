@@ -32,7 +32,7 @@ function SimplifiedAnimalModel({ kind, primary }: { kind: AnimalVisualKind; prim
     const parts: THREE.BufferGeometry[] = [];
     const add = (part: THREE.BufferGeometry, position: [number, number, number], scale: [number, number, number], rotation?: [number, number, number]) => parts.push(transformed(part, position, scale, rotation));
     const hoofed = ["deer", "pronghorn", "gazelle", "caribou", "brocket", "musk-deer"].includes(kind);
-    const mammal = hoofed || ["canid", "bear", "feline", "paca", "capybara", "yak"].includes(kind);
+    const mammal = hoofed || ["canid", "otter", "javelina", "warthog", "marmot", "muskox", "bear", "feline", "paca", "capybara", "yak"].includes(kind);
     const hopping = ["rabbit", "jackrabbit", "hare", "frog", "bullfrog"].includes(kind);
     const winged = ["bird", "wren", "roller", "owl", "macaw", "monal", "bee", "butterfly", "dragonfly"].includes(kind);
     const fishlike = ["fish", "catfish", "shark", "dolphin", "crocodile", "seahorse"].includes(kind);
@@ -43,7 +43,7 @@ function SimplifiedAnimalModel({ kind, primary }: { kind: AnimalVisualKind; prim
       add(new THREE.CapsuleGeometry(0.12, 0.86, 5, 8), [0.96, 0.64, 0], [1, 1, 1], [0, 0, -0.16]);
       [[0.3, 0.38], [0.3, -0.38], [-0.62, 0.38], [-0.62, -0.38]].forEach(([x, z]) => add(new THREE.CylinderGeometry(0.12, 0.1, 0.82, 7), [x, 0.42, z], [1, 1, 1]));
     } else if (mammal) {
-      const heavy = kind === "bear" || kind === "yak";
+      const heavy = kind === "bear" || kind === "yak" || kind === "muskox";
       add(new THREE.CapsuleGeometry(0.46, heavy ? 0.94 : 0.78, 6, 10), [-0.12, 0.94, 0], [1, 1, heavy ? 0.82 : 0.68], [0, 0, Math.PI / 2]);
       add(new THREE.SphereGeometry(1, 11, 8), [0.72, 1.08, 0], [heavy ? 0.4 : 0.34, heavy ? 0.4 : 0.34, heavy ? 0.4 : 0.34]);
       [[0.36, 0.27], [0.36, -0.27], [-0.52, 0.27], [-0.52, -0.27]].forEach(([x, z]) => add(new THREE.CylinderGeometry(0.075, 0.055, 0.78, 7), [x, 0.39, z], [1, 1, 1]));
@@ -74,6 +74,12 @@ function SimplifiedAnimalModel({ kind, primary }: { kind: AnimalVisualKind; prim
     } else if (kind === "octopus") {
       add(new THREE.SphereGeometry(1, 13, 8), [0, 0.5, 0], [0.42, 0.56, 0.42]);
       Array.from({ length: 8 }, (_, index) => { const angle = (index / 8) * Math.PI * 2; add(new THREE.CapsuleGeometry(0.045, 0.64, 5, 7), [Math.cos(angle) * 0.34, 0.09, Math.sin(angle) * 0.34], [1, 1, 1], [0, 0, angle - Math.PI / 2]); });
+    } else if (kind === "slug") {
+      add(new THREE.CapsuleGeometry(0.3, 1.05, 7, 12), [0, 0.22, 0], [1.18, 0.56, 0.74], [0, 0, Math.PI / 2]);
+      add(new THREE.SphereGeometry(1, 10, 8), [0.72, 0.36, 0], [0.28, 0.2, 0.26]);
+    } else if (kind === "clam") {
+      add(new THREE.SphereGeometry(1, 14, 10), [0, 0.24, 0], [0.88, 0.38, 0.72]);
+      add(new THREE.SphereGeometry(1, 14, 10), [0, 0.48, 0], [0.74, 0.24, 0.62]);
     }
     const merged = mergeGeometries(parts, false);
     parts.forEach((part) => part.dispose());
@@ -472,13 +478,13 @@ function ArticulatedLeg({ position, color, paw, legRef }: { position: [number, n
   </group>;
 }
 
-type QuadrupedKind = "canid" | "bear" | "feline" | "paca" | "capybara" | "yak";
+type QuadrupedKind = "canid" | "otter" | "javelina" | "warthog" | "marmot" | "muskox" | "bear" | "feline" | "paca" | "capybara" | "yak";
 
 function QuadrupedModel({ primary, secondary, seed = 0, variant }: ModelProps & { variant: QuadrupedKind }) {
   const root = useRef<THREE.Group>(null);
   const legs = [useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null)];
-  const heavy = variant === "bear" || variant === "yak";
-  const rodent = variant === "paca" || variant === "capybara";
+  const heavy = variant === "bear" || variant === "yak" || variant === "muskox";
+  const rodent = variant === "paca" || variant === "capybara" || variant === "marmot";
   const feline = variant === "feline";
   useFrame(({ clock }) => {
     const t = clock.elapsedTime * (heavy ? 1.1 : 1.8) + seed;
@@ -506,10 +512,12 @@ function QuadrupedModel({ primary, secondary, seed = 0, variant }: ModelProps & 
       <mesh castShadow position={[-0.35, 0.15, 0]} rotation={[0, 0, Math.PI / 2]} scale={[0.16, feline ? 0.82 : 0.55, 0.16]}><capsuleGeometry args={[0.25, 0.8, 8, 12]} />{material(primary, 0.9)}</mesh>
     </group>}
     {variant === "paca" && [[-0.48, 1.25], [-0.12, 1.32], [0.26, 1.24]].flatMap(([x, y]) => [-1, 1].map((side) => <mesh key={`${x}-${side}`} position={[x, y, side * 0.43]} scale={[0.07, 0.04, 0.035]}><sphereGeometry args={[1, 9, 6]} />{material("#f3dfb4", 0.86)}</mesh>))}
-    {variant === "yak" && <>
+    {(variant === "yak" || variant === "muskox") && <>
       <mesh position={[-0.1, 0.68, 0]} scale={[0.72, 0.34, 0.66]}><sphereGeometry args={[1, 18, 12]} />{material(secondary, 0.98)}</mesh>
       {[-1, 1].map((side) => <mesh key={side} position={[0.77, 1.53, side * 0.25]} rotation={[0, 0, side * -0.65]}><torusGeometry args={[0.28, 0.045, 8, 18, Math.PI * 1.3]} />{material("#e6d6b5", 0.9)}</mesh>)}
     </>}
+    {(variant === "javelina" || variant === "warthog") && [-1, 1].map((side) => <mesh key={side} position={[1.27, 0.87, side * 0.16]} rotation={[0, 0, side * 0.72]}><coneGeometry args={[0.035, 0.38, 7]} />{material("#f1e1c2", 0.88)}</mesh>)}
+    {variant === "otter" && <mesh position={[-1.3, 0.88, 0]} rotation={[0, 0, 0.25]} scale={[0.12, 0.8, 0.12]}><capsuleGeometry args={[0.24, 0.92, 8, 12]} />{material(primary, 0.78)}</mesh>}
   </group>;
 }
 
@@ -653,6 +661,22 @@ function RayModel({ primary, secondary }: ModelProps) {
   );
 }
 
+function SlugModel({ primary, secondary }: ModelProps) {
+  return <group>
+    <mesh castShadow position={[-0.08, 0.22, 0]} rotation={[0, 0, Math.PI / 2]} scale={[1.18, 0.48, 0.68]}><capsuleGeometry args={[0.38, 1.16, 8, 14]} />{material(primary, 0.78)}</mesh>
+    <mesh castShadow position={[0.88, 0.33, 0]} scale={[0.32, 0.22, 0.28]}><sphereGeometry args={[1, 16, 10]} />{material(primary, 0.74)}</mesh>
+    {[-1, 1].map((side) => <group key={side} position={[0.93, 0.5, side * 0.14]} rotation={[side * 0.15, 0, -0.12]}><mesh><capsuleGeometry args={[0.022, 0.34, 5, 8]} />{material(secondary, 0.62)}</mesh><mesh position={[0, 0.2, 0]} scale={[0.04, 0.04, 0.04]}><sphereGeometry args={[1, 8, 6]} />{material("#171911", 0.48)}</mesh></group>)}
+  </group>;
+}
+
+function ClamModel({ primary, secondary }: ModelProps) {
+  return <group>
+    <mesh castShadow position={[0, 0.22, 0]} rotation={[0, 0, 0.04]} scale={[1.05, 0.48, 0.86]}><sphereGeometry args={[0.86, 22, 14]} />{material(secondary, 0.7)}</mesh>
+    <mesh castShadow position={[0, 0.47, 0]} scale={[0.86, 0.3, 0.7]}><sphereGeometry args={[0.86, 22, 14]} />{material(primary, 0.54)}</mesh>
+    {[-1, 1].map((side) => <mesh key={side} position={[0, 0.5, side * 0.35]} rotation={[0, 0, side * 0.18]} scale={[0.8, 0.2, 0.05]}><torusGeometry args={[0.62, 0.04, 8, 20, Math.PI]} />{material("#e8d57a", 0.55)}</mesh>)}
+  </group>;
+}
+
 export function AnimalModel({ kind, simplified = false, ...props }: ModelProps & { kind: AnimalVisualKind; simplified?: boolean }) {
   if (simplified) return <SimplifiedAnimalModel kind={kind} primary={props.primary} />;
   if (["deer", "pronghorn", "gazelle", "caribou", "brocket", "musk-deer"].includes(kind)) return <DeerModel {...props} variant={kind as HoofedKind} />;
@@ -665,12 +689,14 @@ export function AnimalModel({ kind, simplified = false, ...props }: ModelProps &
   if (kind === "dragonfly") return <DragonflyModel {...props} />;
   if (kind === "turtle" || kind === "tortoise") return <TurtleModel {...props} variant={kind} />;
   if (kind === "ray") return <RayModel {...props} />;
-  if (["canid", "bear", "feline", "paca", "capybara", "yak"].includes(kind)) return <QuadrupedModel {...props} variant={kind as QuadrupedKind} />;
+  if (["canid", "otter", "javelina", "warthog", "marmot", "muskox", "bear", "feline", "paca", "capybara", "yak"].includes(kind)) return <QuadrupedModel {...props} variant={kind as QuadrupedKind} />;
   if (kind === "elephant") return <ElephantModel {...props} />;
   if (kind === "dolphin") return <DolphinModel {...props} />;
   if (kind === "crocodile") return <CrocodileModel {...props} />;
   if (kind === "seahorse") return <SeahorseModel {...props} />;
   if (kind === "jellyfish") return <JellyfishModel {...props} />;
   if (kind === "octopus") return <OctopusModel {...props} />;
+  if (kind === "slug") return <SlugModel {...props} />;
+  if (kind === "clam") return <ClamModel {...props} />;
   throw new Error(`Unknown animal visual kind: ${kind}`);
 }
