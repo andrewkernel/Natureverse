@@ -14,6 +14,8 @@
 
 The Field Guide is deliberately local and deterministic for the hackathon demo: prompts map to the same simulation controls that drive weather, habitat, water quality, and populations. A server-side Gemini adapter can be added later with a private `GEMINI_API_KEY`; no API key belongs in this client app or repository.
 
+For a recording-ready walkthrough, see [DEMO.md](DEMO.md).
+
 ## Run locally
 
 Requires Node.js `>=22.13.0`.
