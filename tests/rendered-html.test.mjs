@@ -56,6 +56,11 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(app, /beginExploration/);
   assert.match(app, /<BiomeGlobeLaunch/);
   assert.match(launch, /Opening the world atlas/);
+  assert.match(launch, /progress >= 100/);
+  assert.match(launch, /role="progressbar"/);
+  assert.doesNotMatch(launch, /progress >= 76/);
+  assert.match(app, /setTimeout\(\(\) => setLaunchPhase\("globe"\), 650\)/);
+  assert.match(styles, /transition: opacity 220ms ease 180ms/);
   assert.match(globe, /Choose where to begin\./);
   assert.match(globe, /disabled=\{!selectedBiome\}/);
   assert.match(globe, /<EarthSelectorScene/);

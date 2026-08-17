@@ -22,7 +22,7 @@ export function NatureverseLaunch({ progress }: Props) {
 
   return (
     <div className="launch-backdrop launch-loading-backdrop" role="status" aria-live="polite" aria-label="Loading Natureverse">
-      <section className={"launch-wall" + (progress >= 76 ? " is-opening" : "")} aria-label="Preparing the Natureverse world atlas">
+      <section className={"launch-wall" + (progress >= 100 ? " is-opening" : "")} aria-label="Preparing the Natureverse world atlas">
         <div className="launch-wall-shutter launch-wall-shutter-left" aria-hidden="true" />
         <div className="launch-wall-shutter launch-wall-shutter-right" aria-hidden="true" />
         <div className="launch-wall-content">
@@ -37,7 +37,7 @@ export function NatureverseLaunch({ progress }: Props) {
           </div>
           <div className="launch-wall-status">
             <span>{statusForProgress(progress)}</span>
-            <div className="launch-progress" aria-hidden="true"><i style={{ width: progress + "%" }} /></div>
+            <div className="launch-progress" role="progressbar" aria-label="Natureverse loading progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{ width: progress + "%" }} /></div>
           </div>
         </div>
       </section>

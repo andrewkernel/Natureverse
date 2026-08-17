@@ -65,7 +65,7 @@ export default function NatureverseApp() {
       const next = Math.min(100, Math.round(((now - startedAt) / duration) * 100));
       setLaunchProgress(next);
       if (next < 100) frame = window.requestAnimationFrame(run);
-      else revealTimer = window.setTimeout(() => setLaunchPhase("globe"), 80);
+      else revealTimer = window.setTimeout(() => setLaunchPhase("globe"), 650);
     };
     frame = window.requestAnimationFrame(run);
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(revealTimer); };
