@@ -1,15 +1,16 @@
 "use client";
 /* eslint-disable react/no-unknown-property */
 
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useEffect, useMemo, useRef, type CSSProperties, type MutableRefObject, type PointerEvent as ReactPointerEvent } from "react";
+import { Suspense, useEffect, useMemo, useRef, type MutableRefObject, type PointerEvent as ReactPointerEvent } from "react";
 import * as THREE from "three";
 import type { BiomeConfig, BiomeId } from "../types/biome";
 
 const EARTH_MODEL_URL = "/models/low-poly-planet-earth.glb";
 const EARTH_CENTER: [number, number, number] = [0.0512, -1.0961, -0.003];
 const MARKER_RADIUS = 1.09;
+const EARTH_SCALE = 0.84;
 
 const coordinates: Record<BiomeId, [number, number]> = {
   "temperate-rainforest": [45.52, -122.68],
@@ -56,26 +57,21 @@ function PlanetMesh() {
   return <group position={EARTH_CENTER}><primitive object={planet} /></group>;
 }
 
-function RegionBeacon({ biome, index, selected, onSelect }: { biome: BiomeConfig; index: number; selected: boolean; onSelect: () => void }) {
+function RegionBeacon({ biome, selected, onSelect }: { biome: BiomeConfig; selected: boolean; onSelect: () => void }) {
   const point = useMemo(() => pointForLocation(coordinates[biome.id]), [biome.id]);
   const outward = useMemo(() => point.clone().normalize(), [point]);
   const orientation = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), outward), [outward]);
 
   return (
     <group position={point} quaternion={orientation}>
-      <mesh position={[0, 0.047, 0]} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
-        <cylinderGeometry args={[selected ? 0.032 : 0.022, selected ? 0.032 : 0.022, selected ? 0.13 : 0.09, 8]} />
-        <meshBasicMaterial color={biome.palette.accent} toneMapped={false} />
+      <mesh position={[0, 0.024, 0]} onClick={(event) => { event.stopPropagation(); onSelect(); }}>
+        <cylinderGeometry args={[selected ? 0.034 : 0.024, selected ? 0.034 : 0.024, selected ? 0.062 : 0.044, 12]} />
+        <meshBasicMaterial color={biome.palette.accent} toneMapped={false} transparent opacity={selected ? 1 : 0.8} />
       </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[selected ? 0.09 : 0.06, selected ? 0.106 : 0.071, 28]} />
-        <meshBasicMaterial color={biome.palette.accent} transparent opacity={selected ? 0.82 : 0.52} side={THREE.DoubleSide} toneMapped={false} />
+      <mesh position={[0, 0.003, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[selected ? 0.075 : 0.045, selected ? 0.088 : 0.055, 28]} />
+        <meshBasicMaterial color={biome.palette.accent} transparent opacity={selected ? 0.92 : 0.42} side={THREE.DoubleSide} toneMapped={false} />
       </mesh>
-      <Html transform occlude distanceFactor={6.8} position={[0, selected ? 0.22 : 0.17, 0]} center>
-        <button className={"earth-marker-label" + (selected ? " is-selected" : "")} type="button" onClick={onSelect} style={{ "--site-accent": biome.palette.accent } as CSSProperties}>
-          <span>{String(index + 1).padStart(2, "0")}</span>{biome.shortLabel}
-        </button>
-      </Html>
     </group>
   );
 }
@@ -106,9 +102,9 @@ function InteractiveEarth({ biomes, selectedBiomeId, onSelectBiome, dragXRef, is
   });
 
   return (
-    <group ref={globe}>
+    <group ref={globe} scale={EARTH_SCALE}>
       <PlanetMesh />
-      {biomes.map((biome, index) => <RegionBeacon biome={biome} index={index} key={biome.id} selected={biome.id === selectedBiomeId} onSelect={() => onSelectBiome(biome.id)} />)}
+      {biomes.map((biome) => <RegionBeacon biome={biome} key={biome.id} selected={biome.id === selectedBiomeId} onSelect={() => onSelectBiome(biome.id)} />)}
     </group>
   );
 }
@@ -120,7 +116,6 @@ export function EarthSelectorScene({ biomes, selectedBiomeId, onSelectBiome }: P
   const isDraggingRef = useRef(false);
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest?.(".earth-marker-label")) return;
     dragPointer.current = event.pointerId;
     lastX.current = event.clientX;
     isDraggingRef.current = true;

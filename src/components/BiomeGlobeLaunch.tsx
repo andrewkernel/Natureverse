@@ -27,12 +27,12 @@ export function BiomeGlobeLaunch({ biomes, selectedBiomeId, onSelectBiome, onBeg
         <header className="globe-launch-intro">
           <p><Globe2 size={15} /> Natureverse field sites</p>
           <h1 id="globe-launch-title">Choose where to begin.</h1>
-          <p id="globe-launch-copy">Select a marked place on the living globe. Each site opens a distinct 3D ecosystem.</p>
+          <p id="globe-launch-copy">Rotate the Earth, then choose a field site from the directory. Each site opens a distinct 3D ecosystem.</p>
         </header>
 
         <div className="globe-launch-map" aria-label="Interactive field-site globe">
           <EarthSelectorScene biomes={biomes} selectedBiomeId={selectedBiomeId} onSelectBiome={onSelectBiome} />
-          <p className="globe-launch-drag"><RotateCcw size={13} /> Drag Earth to rotate · select a beacon</p>
+          <p className="globe-launch-drag"><RotateCcw size={13} /> Drag Earth to rotate · field pins mark each site</p>
         </div>
 
         <aside className="globe-launch-directory" aria-label="Field-site directory">

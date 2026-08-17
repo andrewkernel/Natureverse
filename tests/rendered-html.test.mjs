@@ -64,8 +64,10 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(earth, /useGLTF\(EARTH_MODEL_URL\)/);
   assert.match(earth, /pointForLocation/);
   assert.match(earth, /function RegionBeacon/);
-  assert.match(earth, /<Html transform occlude/);
-  assert.match(styles, /earth-marker-label/);
+  assert.match(earth, /const EARTH_SCALE = 0\.84/);
+  assert.match(earth, /scale=\{EARTH_SCALE\}/);
+  assert.doesNotMatch(earth, /<Html transform/);
+  assert.match(styles, /width: min\(530px, 88%\)/);
   assert.equal(model.subarray(0, 4).toString("utf8"), "glTF");
   assert.match(launch, /natureverse-launch-logo\.png/);
 });
