@@ -1,0 +1,19 @@
+[
+  {"source":"river","target":"fish","relationship":"provides_habitat","strength":1,"label":"provides cool-water habitat for"},
+  {"source":"river","target":"frog","relationship":"provides_habitat","strength":0.85,"label":"creates breeding habitat for"},
+  {"source":"river","target":"dragonfly","relationship":"provides_habitat","strength":0.82,"label":"supports aquatic young of"},
+  {"source":"wildflower","target":"bee","relationship":"provides_food","strength":0.95,"label":"provides nectar and pollen for"},
+  {"source":"wildflower","target":"butterfly","relationship":"provides_food","strength":0.84,"label":"provides food and host plants for"},
+  {"source":"bee","target":"wildflower","relationship":"pollinates","strength":0.8,"label":"pollinates"},
+  {"source":"bee","target":"fruit_tree","relationship":"pollinates","strength":0.92,"label":"pollinates"},
+  {"source":"oak","target":"bird","relationship":"provides_habitat","strength":0.9,"label":"provides nesting habitat for"},
+  {"source":"oak","target":"deer","relationship":"provides_food","strength":0.55,"label":"provides shelter and forage for"},
+  {"source":"grass","target":"rabbit","relationship":"provides_food","strength":0.75,"label":"provides food and cover for"},
+  {"source":"frog","target":"bird","relationship":"supports_food_web","strength":0.42,"label":"supports the food web of"},
+  {"source":"fish","target":"bird","relationship":"provides_food","strength":0.54,"label":"provides food for"},
+  {"source":"dragonfly","target":"bird","relationship":"provides_food","strength":0.35,"label":"provides food for"},
+  {"source":"fruit_tree","target":"bird","relationship":"provides_food","strength":0.65,"label":"provides seasonal fruit for"},
+  {"source":"wildflower","target":"rabbit","relationship":"provides_cover","strength":0.36,"label":"creates cover for"},
+  {"source":"invasive_plant","target":"wildflower","relationship":"competes_with","strength":0.9,"label":"outcompetes"},
+  {"source":"invasive_plant","target":"grass","relationship":"competes_with","strength":0.72,"label":"displaces"}
+]

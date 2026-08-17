@@ -1,0 +1,9 @@
+{
+  "initialMetrics":{"waterQuality":94,"vegetation":95,"pollination":92,"biodiversity":93},
+  "effects":{
+    "pollution":{"metrics":{"waterQuality":-0.78,"vegetation":-0.16,"pollination":-0.2,"biodiversity":-0.18},"species":{"fish":-0.76,"frog":-0.64,"dragonfly":-0.55,"bee":-0.22,"wildflower":-0.18}},
+    "drought":{"metrics":{"waterQuality":-0.24,"vegetation":-0.7,"pollination":-0.48,"biodiversity":-0.3},"species":{"wildflower":-0.72,"bee":-0.5,"butterfly":-0.5,"frog":-0.4,"fish":-0.36,"oak":-0.28,"grass":-0.52}},
+    "habitatLoss":{"metrics":{"vegetation":-0.68,"pollination":-0.32,"biodiversity":-0.66,"waterQuality":-0.18},"species":{"oak":-0.72,"bird":-0.65,"deer":-0.54,"rabbit":-0.5,"wildflower":-0.46,"grass":-0.48}},
+    "invasiveSpecies":{"metrics":{"vegetation":-14,"pollination":-16,"biodiversity":-20},"species":{"invasive_plant":82,"wildflower":-24,"grass":-20,"bee":-14,"butterfly":-16}}
+  }
+}
