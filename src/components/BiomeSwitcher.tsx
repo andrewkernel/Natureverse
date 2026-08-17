@@ -53,7 +53,7 @@ export function BiomeSwitcher({ biomes, activeId, onChange }: BiomeSwitcherProps
 
   return (
     <nav className="biome-switcher" aria-label="Explore seven connected biomes">
-      <div className="biome-switcher-kicker"><span>World atlas</span><strong>07 biomes</strong></div>
+      <div className="biome-switcher-kicker"><span>Field sites</span><strong>07 biomes</strong></div>
       <div className="biome-switcher-rail" role="tablist" aria-label="Available biomes">
         {biomes.map((biome, index) => {
           const Icon = icons[biome.iconKey];

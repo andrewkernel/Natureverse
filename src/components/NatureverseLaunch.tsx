@@ -10,7 +10,7 @@ type Props = {
 const statusForProgress = (progress: number) => {
   if (progress < 48) return "Gathering living systems";
   if (progress < 76) return "Connecting every field site";
-  return "Opening the world atlas";
+  return "Opening the field sites";
 };
 
 function FallbackLogo({ Icon = Leaf }: { Icon?: LucideIcon }) {
@@ -22,7 +22,7 @@ export function NatureverseLaunch({ progress }: Props) {
 
   return (
     <div className="launch-backdrop launch-loading-backdrop" role="status" aria-live="polite" aria-label="Loading Natureverse">
-      <section className={"launch-wall" + (progress >= 100 ? " is-opening" : "")} aria-label="Preparing the Natureverse world atlas">
+      <section className={"launch-wall" + (progress >= 100 ? " is-opening" : "")} aria-label="Preparing the Natureverse field sites">
         <div className="launch-wall-shutter launch-wall-shutter-left" aria-hidden="true" />
         <div className="launch-wall-shutter launch-wall-shutter-right" aria-hidden="true" />
         <div className="launch-wall-content">

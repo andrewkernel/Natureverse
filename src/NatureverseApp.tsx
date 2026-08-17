@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, CloudSun, Compass, GalleryHorizontal, Globe2, Leaf, MessageCircle, Play, Search, Sparkles, X } from "lucide-react";
+import { BookOpen, CloudSun, Compass, GalleryHorizontal, Leaf, MessageCircle, Play, Search, Sparkles, X } from "lucide-react";
 import { EcosystemScene } from "./scene/EcosystemScene";
 import { SpeciesPanel, type SpeciesDetails } from "./components/SpeciesPanel";
 import { BiomeSwitcher } from "./components/BiomeSwitcher";
-import { BiomeAtlas } from "./components/BiomeAtlas";
 import { BiomeGlobeLaunch } from "./components/BiomeGlobeLaunch";
 import { ConditionsPanel } from "./components/ConditionsPanel";
 import { SpeciesRail } from "./components/SpeciesRail";
@@ -15,7 +14,7 @@ import { BiomeCinematic } from "./components/BiomeCinematic";
 import { BiomeGallery } from "./components/BiomeGallery";
 import { getBiomeFauna } from "./data/biomeFauna";
 import { BIOME_STORIES } from "./data/biomeStories";
-import { getConnections, healthStatus, relationships, species } from "./engine/ecosystemEngine";
+import { getConnections, healthStatus, relationships, simulateEcosystem, species } from "./engine/ecosystemEngine";
 import { useEcosystemStore } from "./store/ecosystemStore";
 import type { SimulationControls } from "./types/ecosystem";
 import { BIOMES, DEFAULT_BIOME_ID, getBiome } from "./data/biomes";
@@ -46,7 +45,6 @@ export default function NatureverseApp() {
   const [drawer, setDrawer] = useState<Drawer>(null);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [activeBiomeId, setActiveBiomeId] = useState<BiomeId>(DEFAULT_BIOME_ID);
-  const [atlasOpen, setAtlasOpen] = useState(false);
   const [chatReset, setChatReset] = useState(0);
   const [launchPhase, setLaunchPhase] = useState<LaunchPhase>("loading");
   const [launchProgress, setLaunchProgress] = useState(0);
@@ -57,7 +55,6 @@ export default function NatureverseApp() {
   const worldHealthRef = useRef<HTMLElement>(null);
   const activeBiome = getBiome(activeBiomeId);
   const activeStory = BIOME_STORIES[activeBiomeId];
-  const status = healthStatus(result.metrics.overallHealth);
   const selectedFauna = useMemo(() => selectedId ? getBiomeFauna(activeBiomeId).spawns.find((spawn) => spawn.id === selectedId) : undefined, [activeBiomeId, selectedId]);
   const selectedFloraIndex = selectedId ? floraSelectionIds.indexOf(selectedId as typeof floraSelectionIds[number]) : -1;
   const selectedNetworkId = selectedFauna?.role ?? selectedId;
@@ -119,7 +116,6 @@ export default function NatureverseApp() {
 
   const startStory = () => {
     setSelectedId(null);
-    setAtlasOpen(false);
     setSidePanel(null);
     setDrawer(null);
     setGalleryOpen(false);
@@ -129,7 +125,6 @@ export default function NatureverseApp() {
 
   const openGallery = () => {
     stopStory();
-    setAtlasOpen(false);
     setSidePanel(null);
     setDrawer(null);
     setGalleryOpen(true);
@@ -235,21 +230,28 @@ export default function NatureverseApp() {
     return activeStory.beats.length - 1;
   }, [activeStory, storyElapsedMs, storyStartedAt]);
   const storyEffect = storyStartedAt === null ? null : activeStory.beats[storyBeatIndex].effect;
+  const activeStoryBeat = storyStartedAt === null ? null : activeStory.beats[storyBeatIndex];
+  const storyControls = activeStoryBeat?.conditions ?? controls;
+  const visualResult = useMemo(
+    () => activeStoryBeat ? simulateEcosystem(activeStoryBeat.conditions) : result,
+    [activeStoryBeat, result],
+  );
+  const visualStatus = healthStatus(visualResult.metrics.overallHealth);
 
   return (
     <main className="natureverse-shell field-guide-mode">
       <div className="scene-layer" aria-hidden={launchPhase !== "exploring"} aria-label="Interactive 3D ecosystem">
-        <EcosystemScene biome={activeBiome} metrics={result.metrics} populations={result.populations} pollution={controls.pollution} drought={controls.drought} habitatLoss={controls.habitatLoss} invasive={controls.invasiveSpecies} selectedId={selectedId} connectionIds={connectionIds} storyEffect={storyEffect} onSelect={handleSpeciesSelect} />
+        <EcosystemScene biome={activeBiome} metrics={visualResult.metrics} populations={visualResult.populations} pollution={storyControls.pollution} drought={storyControls.drought} habitatLoss={storyControls.habitatLoss} invasive={storyControls.invasiveSpecies} selectedId={selectedId} connectionIds={connectionIds} storyEffect={storyEffect} onSelect={handleSpeciesSelect} />
       </div>
 
       {launchPhase === "loading" && <NatureverseLaunch progress={launchProgress} />}
       {launchPhase === "globe" && <BiomeGlobeLaunch biomes={BIOMES} selectedBiomeId={startBiomeId} onSelectBiome={previewStartBiome} onBegin={beginExploration} />}
 
-      <div className="experience-interface" inert={launchPhase !== "exploring" || atlasOpen || galleryOpen} aria-hidden={launchPhase !== "exploring" || atlasOpen || galleryOpen}>
+      <div className="experience-interface" inert={launchPhase !== "exploring" || galleryOpen} aria-hidden={launchPhase !== "exploring" || galleryOpen}>
         <div className="top-vignette" aria-hidden="true" />
-        <section className="world-health" ref={worldHealthRef} tabIndex={-1} aria-label={"Ecosystem health " + Math.round(result.metrics.overallHealth) + " percent, " + status}>
-          <strong>{Math.round(result.metrics.overallHealth)}</strong>
-          <span><small>Ecosystem health</small><b>{status}</b></span>
+        <section className={`world-health${activeStoryBeat ? ` story-${activeStoryBeat.phase}` : ""}`} ref={worldHealthRef} tabIndex={-1} aria-label={"Ecosystem health " + Math.round(visualResult.metrics.overallHealth) + " percent, " + visualStatus}>
+          <strong>{Math.round(visualResult.metrics.overallHealth)}</strong>
+          <span><small>Ecosystem health</small><b>{visualStatus}</b></span>
         </section>
 
         <BiomeSwitcher biomes={BIOMES.map((biome) => ({ id: biome.id, name: biome.name, shortLabel: biome.shortLabel, location: biome.location, iconKey: biome.iconKey, accent: biome.palette.accent }))} activeId={activeBiomeId} onChange={handleBiomeChange} />
@@ -260,9 +262,6 @@ export default function NatureverseApp() {
           </button>
           <button type="button" onClick={openGallery} aria-label="Open field gallery" title="Open field gallery">
             <GalleryHorizontal size={17} /><span>Gallery</span>
-          </button>
-          <button type="button" onClick={() => { stopStory(); setSidePanel(null); setDrawer(null); setAtlasOpen(true); }} aria-label="Open world atlas" title="Open world atlas">
-            <Globe2 size={17} /><span>Atlas</span>
           </button>
           <button type="button" className={sidePanel === "chat" ? "active" : ""} onClick={() => setSidePanel(sidePanel === "chat" ? null : "chat")} aria-pressed={sidePanel === "chat"} title="Open field guide">
             <MessageCircle size={17} /><span>Field Guide</span>
@@ -278,7 +277,7 @@ export default function NatureverseApp() {
           {sidePanel === "conditions" && <ConditionsPanel biome={activeBiome} controls={controls} onControlChange={setControl} onReset={resetConditions} className="world-conditions-panel" />}
         </aside>}
 
-        {storyStartedAt !== null && <BiomeCinematic story={activeStory} elapsedMs={storyElapsedMs} onClose={stopStory} />}
+        {storyStartedAt !== null && <BiomeCinematic story={activeStory} elapsedMs={storyElapsedMs} health={visualResult.metrics.overallHealth} onClose={stopStory} />}
         <div className="explore-hint"><Compass size={15} /><span>Drag to explore</span><i /> <span>Tap a species to observe</span></div>
 
         <nav className="mobile-dock" aria-label="Natureverse tools">
@@ -300,7 +299,6 @@ export default function NatureverseApp() {
 
         <SpeciesPanel species={selectedSpecies} open={Boolean(selectedSpecies)} onClose={() => setSelectedId(null)} onConnectionSelect={(connection) => connection.id && handleSpeciesSelect(connection.id)} />
       </div>
-      {atlasOpen && <BiomeAtlas biomes={BIOMES} activeId={activeBiomeId} onChange={(id) => { handleBiomeChange(id); setAtlasOpen(false); }} onClose={() => setAtlasOpen(false)} />}
       {galleryOpen && <BiomeGallery biome={activeBiome} selectedId={selectedId} onClose={() => setGalleryOpen(false)} onInspect={inspectGalleryItem} />}
     </main>
   );

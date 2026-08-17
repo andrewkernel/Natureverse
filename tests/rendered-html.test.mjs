@@ -56,7 +56,7 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(app, /previewStartBiome/);
   assert.match(app, /beginExploration/);
   assert.match(app, /<BiomeGlobeLaunch/);
-  assert.match(launch, /Opening the world atlas/);
+  assert.match(launch, /Opening the field sites/);
   assert.match(launch, /progress >= 100/);
   assert.match(launch, /role="progressbar"/);
   assert.doesNotMatch(launch, /progress >= 76/);
@@ -82,12 +82,14 @@ test("ships a logo wall, model-backed Earth selection, and requires a chosen fie
   assert.match(earth, /<group ref=\{yawGroup\}/);
   assert.doesNotMatch(earth, /<Html transform/);
   assert.match(styles, /width: min\(530px, 88%\)/);
+  assert.match(styles, /width: min\(610px, calc\(100vw - 188px\)\)/);
+  assert.match(styles, /grid-auto-rows: 42px/);
   assert.equal(model.subarray(0, 4).toString("utf8"), "glTF");
   assert.match(launch, /natureverse-launch-logo\.png/);
 });
 
-test("ships seven timed biome stories, cinematic effects, and a full-screen tagged gallery", async () => {
-  const [{ BIOME_STORIES }, { BIOMES }, { BIOME_FAUNA }, app, cinematic, gallery, scene, weather, atlas, modalFocus] = await Promise.all([
+test("ships seven timed ecological arcs, cinematic effects, and a full-screen tagged gallery", async () => {
+  const [{ BIOME_STORIES }, { BIOMES }, { BIOME_FAUNA }, app, cinematic, gallery, scene, weather, modalFocus] = await Promise.all([
     import("../src/data/biomeStories.ts"),
     import("../src/data/biomes.ts"),
     import("../src/data/biomeFauna.ts"),
@@ -96,7 +98,6 @@ test("ships seven timed biome stories, cinematic effects, and a full-screen tagg
     readFile(new URL("../src/components/BiomeGallery.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/scene/EcosystemScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/scene/WeatherSystem.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/BiomeAtlas.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/hooks/useModalFocus.ts", import.meta.url), "utf8"),
   ]);
 
@@ -105,12 +106,18 @@ test("ships seven timed biome stories, cinematic effects, and a full-screen tagg
     assert.equal(story.durationMs, 20000);
     assert.equal(story.beats.length, 4);
     assert.equal(story.beats.reduce((total, beat) => total + beat.durationMs, 0), 20000);
-    assert.ok(story.beats.every((beat) => beat.subtitle.length > 24 && beat.effect));
+    assert.ok(story.beats.every((beat) => beat.subtitle.length > 24 && beat.effect && beat.phase && beat.conditions));
+    assert.deepEqual(story.beats.map((beat) => beat.phase), ["thriving", "pressured", "collapsed", "restoring"]);
+    assert.equal(story.beats[0].conditions.pollution, 0, `${story.biomeName} should start thriving`);
+    assert.ok(story.beats[1].conditions.pollution >= 20 || story.beats[1].conditions.drought >= 20, `${story.biomeName} should visibly enter pressure`);
+    assert.ok(story.beats[2].conditions.pollution >= 75 && story.beats[2].conditions.drought >= 75 && story.beats[2].conditions.habitatLoss >= 75 && story.beats[2].conditions.invasiveSpecies, `${story.biomeName} should reach ecological collapse`);
+    assert.deepEqual(story.beats[3].conditions, { pollution: 0, drought: 0, habitatLoss: 0, invasiveSpecies: false }, `${story.biomeName} should finish restored`);
   }
 
   assert.match(app, /<BiomeCinematic/);
   assert.match(app, /<BiomeGallery/);
   assert.match(app, /openGallery/);
+  assert.match(app, /simulateEcosystem\(activeStoryBeat\.conditions\)/);
   assert.match(app, /storyEffect=\{storyEffect\}/);
   assert.match(cinematic, /role="progressbar"/);
   assert.match(cinematic, /Story progress/);
@@ -123,10 +130,8 @@ test("ships seven timed biome stories, cinematic effects, and a full-screen tagg
   assert.match(scene, /cinematicEffect=\{storyEffect\}/);
   assert.match(weather, /function CinematicParticles/);
   assert.match(weather, /cinematicProfiles/);
-  assert.doesNotMatch(atlas, /Natureverse network/);
-  assert.match(atlas, /FIELD_SITE_COORDINATES/);
   assert.match(modalFocus, /focusableSelector/);
-  assert.match(app, /atlasOpen \|\| galleryOpen/);
+  assert.doesNotMatch(app, /BiomeAtlas|atlasOpen|Open world atlas/);
   assert.match(app, /const floraSelectionIds = \["oak", "fruit_tree", "wildflower"\] as const/);
   assert.match(app, /name: activeBiome\.signatureFlora\[selectedFloraIndex\]/);
   for (const biome of BIOMES) {
@@ -171,13 +176,12 @@ test("ships seven distinct biome configurations and shared terrain grounding", a
   }
 });
 
-test("ships the world-building, weather, atlas, story, and natural behavior layers", async () => {
-  const [scene, landmarks, weather, atlas, story] = await Promise.all([
+test("ships the world-building, weather, cinematic story, and natural behavior layers", async () => {
+  const [scene, landmarks, weather, story] = await Promise.all([
     readFile(new URL("../src/scene/EcosystemScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/scene/WorldLandmarks.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/scene/WeatherSystem.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/BiomeAtlas.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/EcosystemStory.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/BiomeCinematic.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(scene, /const cruisePulse/);
@@ -188,9 +192,8 @@ test("ships the world-building, weather, atlas, story, and natural behavior laye
   assert.match(landmarks, /function ReefLandmark/);
   assert.match(weather, /WeatherAtmosphere/);
   assert.match(weather, /setDrawRange/);
-  assert.match(atlas, /import\("cobe"\)/);
-  assert.match(atlas, /devicePixelRatio/);
-  assert.match(story, /Canopy loss breaks the food web/);
+  assert.match(story, /phaseLabel/);
+  assert.match(story, /health/);
 });
 
 test("generates a distinct fauna composition for every biome", async () => {
@@ -296,7 +299,7 @@ test("ships conversational controls and a resilient species selection path", asy
   assert.match(app, /const selectedFauna = useMemo/);
   assert.match(app, /const selectedNetworkId = selectedFauna\?\.role \?\? selectedId/);
   assert.match(app, /name: selectedFauna\?\.label/);
-  assert.match(app, /className="world-health"/);
+  assert.match(app, /className=\{`world-health/);
   assert.doesNotMatch(app, /natureverse-header/);
   assert.match(app, /idPrefix="desktop-field-guide"/);
   assert.match(app, /idPrefix="mobile-field-guide"/);

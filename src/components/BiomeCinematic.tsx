@@ -1,12 +1,20 @@
 "use client";
 
 import { X } from "lucide-react";
-import type { BiomeStory } from "../data/biomeStories";
+import type { BiomeStory, EcologicalStoryPhase } from "../data/biomeStories";
 
 type Props = {
   story: BiomeStory;
   elapsedMs: number;
+  health: number;
   onClose: () => void;
+};
+
+const phaseLabel: Record<EcologicalStoryPhase, string> = {
+  thriving: "Thriving ecosystem",
+  pressured: "Pressure is building",
+  collapsed: "Food web collapse",
+  restoring: "Restoration in motion",
 };
 
 const formatRemaining = (elapsedMs: number, durationMs: number) => {
@@ -14,7 +22,7 @@ const formatRemaining = (elapsedMs: number, durationMs: number) => {
   return `0:${String(remaining).padStart(2, "0")}`;
 };
 
-export function BiomeCinematic({ story, elapsedMs, onClose }: Props) {
+export function BiomeCinematic({ story, elapsedMs, health, onClose }: Props) {
   const beatEnds = story.beats.reduce<number[]>((ends, beat) => [...ends, (ends.at(-1) ?? 0) + beat.durationMs], []);
   const locatedBeat = beatEnds.findIndex((end) => elapsedMs < end);
   const beatIndex = locatedBeat === -1 ? story.beats.length - 1 : locatedBeat;
@@ -24,8 +32,9 @@ export function BiomeCinematic({ story, elapsedMs, onClose }: Props) {
   return (
     <>
       <div className="cinematic-frame" aria-hidden="true" />
-      <section className="biome-cinematic" aria-live="polite" aria-label={`${story.title} cinematic story`}>
+      <section className={`biome-cinematic phase-${activeBeat.phase}`} aria-live="polite" aria-label={`${story.title} cinematic story`}>
         <div className="biome-cinematic-meta"><strong>{story.title}</strong><span>{formatRemaining(elapsedMs, story.durationMs)}</span></div>
+        <div className="biome-cinematic-state"><span>{phaseLabel[activeBeat.phase]}</span><b>{Math.round(health)} health</b></div>
         <p className="biome-cinematic-subtitle" key={`${story.biomeId}-${beatIndex}`}>{activeBeat.subtitle}</p>
         <div className="biome-cinematic-footer">
           <div className="biome-cinematic-steps" aria-label={`Story beat ${beatIndex + 1} of ${story.beats.length}`}>
