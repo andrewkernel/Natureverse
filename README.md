@@ -62,6 +62,8 @@ flowchart LR
 
 React, TypeScript, Three.js, React Three Fiber, Zustand, Cobe, and Lucide. The app is built with vinext and includes a Cloudflare Worker runtime, so it is not configured for static GitHub Pages hosting.
 
+OpenAI's GPT 5.6 to integrate and plan the project scope.
+
 ## Asset credit
 
 The launch Earth model is [Low Poly Planet Earth by Jacobs Development](https://sketchfab.com/3d-models/low-poly-planet-earth-7b1dc4f802a54a6297e7a46888a85f77), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Natureverse adds interactive region beacons and interface overlays; see [ASSET_CREDITS.md](ASSET_CREDITS.md).
