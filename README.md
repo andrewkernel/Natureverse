@@ -6,7 +6,7 @@
 
 ## Demo path
 
-1. Watch the short opening sequence.
+1. Watch the Natureverse logo wall open into the field-site picker.
 2. Choose a starting region—from the Cascadian Rainforest to the Coral Triangle.
 3. Enter the field site and orbit the living 3D scene.
 4. Tap an animal for its ecological role, or ask the Field Guide a question.

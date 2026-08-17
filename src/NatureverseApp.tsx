@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Activity, Compass, Globe2, Leaf, RotateCcw, Search, Sparkles } from "lucide-react";
 import { EcosystemScene } from "./scene/EcosystemScene";
 import { MetricsPanel, type EcosystemMetrics, type MetricStatus } from "./components/MetricsPanel";
@@ -45,20 +45,23 @@ export default function NatureverseApp() {
   const [launchPhase, setLaunchPhase] = useState<LaunchPhase>("loading");
   const [launchProgress, setLaunchProgress] = useState(0);
   const [startBiomeId, setStartBiomeId] = useState<BiomeId | null>(null);
+  const experienceHeaderRef = useRef<HTMLElement>(null);
   const activeBiome = getBiome(activeBiomeId);
   const status = healthStatus(result.metrics.overallHealth);
 
   useEffect(() => {
     const startedAt = performance.now();
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 220 : 2200;
     let frame = 0;
+    let revealTimer = 0;
     const run = (now: number) => {
-      const next = Math.min(100, Math.round(((now - startedAt) / 950) * 100));
+      const next = Math.min(100, Math.round(((now - startedAt) / duration) * 100));
       setLaunchProgress(next);
       if (next < 100) frame = window.requestAnimationFrame(run);
-      else window.setTimeout(() => setLaunchPhase("choose-region"), 180);
+      else revealTimer = window.setTimeout(() => setLaunchPhase("choose-region"), 80);
     };
     frame = window.requestAnimationFrame(run);
-    return () => { window.cancelAnimationFrame(frame); };
+    return () => { window.cancelAnimationFrame(frame); window.clearTimeout(revealTimer); };
   }, []);
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export default function NatureverseApp() {
     if (!startBiomeId) return;
     handleBiomeChange(startBiomeId);
     setLaunchPhase("exploring");
+    window.requestAnimationFrame(() => experienceHeaderRef.current?.focus());
   };
 
   const handleSpeciesSelect = (id: string | null) => setSelectedId(id);
@@ -166,7 +170,7 @@ export default function NatureverseApp() {
 
       <div className="experience-interface" inert={launchPhase !== "exploring"} aria-hidden={launchPhase !== "exploring"}>
         <div className="top-vignette" aria-hidden="true" />
-        <header className="natureverse-header">
+        <header className="natureverse-header" ref={experienceHeaderRef} tabIndex={-1}>
         <div className="brand-lockup">
           <div className="brand-mark"><Leaf size={18} strokeWidth={2.3} /></div>
           <div><div className="brand-name">Nature<span>verse</span></div><p>{activeBiome.location} · {activeBiome.tagline}</p></div>

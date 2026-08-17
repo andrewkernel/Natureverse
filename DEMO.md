@@ -11,7 +11,7 @@ Record at 1280 × 720 or 1440 × 900. Start from a fresh page load so the openin
 
 | Time | On screen | Narration / action |
 | --- | --- | --- |
-| 0–4s | “Waking the world” loader | “Natureverse makes ecological cause and effect visible.” |
+| 0–4s | Natureverse logo wall opens | “Natureverse makes ecological cause and effect visible.” |
 | 4–10s | Region selection | “I begin by choosing a field site. Every site has its own species, weather, and pressures.” Select **Rainforest** and choose **Begin in Rainforest**. |
 | 10–18s | Cascadian Rainforest scene | Slowly orbit the scene. “This is a living 3D model, not a static map.” |
 | 18–28s | Species selection | Select a visible trout, frog, or deer. “Every animal is connected to habitat and to other species.” Close the detail panel. |

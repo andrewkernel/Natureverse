@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Check, Compass, Leaf, MapPin, Mountain, Snowflake, Sparkles, SunMedium, Trees, Waves } from "lucide-react";
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import type { BiomeConfig, BiomeIconKey, BiomeId } from "../types/biome";
 
 type Props = {
@@ -24,15 +24,47 @@ const biomeIcons: Record<BiomeIconKey, typeof Trees> = {
 };
 
 export function NatureverseLaunch({ phase, progress, biomes, selectedBiomeId, onSelectBiome, onBegin }: Props) {
+  const [logoUnavailable, setLogoUnavailable] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
+  const firstBiomeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (phase !== "choose-region") return;
+    const frame = window.requestAnimationFrame(() => firstBiomeRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [phase]);
+
+  const trapDialogFocus = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])');
+    if (!focusable?.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  };
+
   if (phase === "loading") {
     return (
       <div className="launch-backdrop launch-loading-backdrop" role="status" aria-live="polite" aria-label="Loading Natureverse">
-        <section className="launch-loader" aria-label="Preparing your field sites">
-          <div className="launch-orbit" aria-hidden="true"><i /><i /><span><Leaf size={23} /></span></div>
-          <p>Natureverse field notes</p>
-          <h1>Waking the world</h1>
-          <div className="launch-progress" aria-hidden="true"><i style={{ width: progress + "%" }} /></div>
-          <small>{progress < 62 ? "Mapping habitats" : progress < 90 ? "Listening for life" : "Field sites ready"}</small>
+        <section className={"launch-wall" + (progress >= 76 ? " is-opening" : "")} aria-label="Preparing your field sites">
+          <div className="launch-wall-shutter launch-wall-shutter-left" aria-hidden="true" />
+          <div className="launch-wall-shutter launch-wall-shutter-right" aria-hidden="true" />
+          <div className="launch-wall-content">
+            <div className="launch-wall-logo-frame">
+              {logoUnavailable
+                ? <div className="launch-wall-logo-fallback" aria-label="Natureverse"><Leaf size={94} /><strong>Nature<span>verse</span></strong><small>Explore · Learn · Restore</small></div>
+                : <>
+                  {/* The supplied transparent brand art is intentionally presented at its native aspect ratio. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/natureverse-launch-logo.png" alt="Natureverse logo — Explore, learn, restore" className="launch-wall-logo" onError={() => setLogoUnavailable(true)} />
+                </>}
+            </div>
+            <div className="launch-wall-status">
+              <span>{progress < 48 ? "Gathering living systems" : progress < 76 ? "Connecting every field site" : "Opening the field guide"}</span>
+              <div className="launch-progress" aria-hidden="true"><i style={{ width: progress + "%" }} /></div>
+            </div>
+          </div>
         </section>
       </div>
     );
@@ -42,7 +74,7 @@ export function NatureverseLaunch({ phase, progress, biomes, selectedBiomeId, on
 
   return (
     <div className="launch-backdrop" role="presentation">
-      <section className="region-launch" role="dialog" aria-modal="true" aria-labelledby="region-launch-title" aria-describedby="region-launch-copy">
+      <section className="region-launch" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="region-launch-title" aria-describedby="region-launch-copy">
         <header className="region-launch-header">
           <div className="region-launch-mark"><Compass size={19} /></div>
           <div>
@@ -62,8 +94,10 @@ export function NatureverseLaunch({ phase, progress, biomes, selectedBiomeId, on
                 className={"region-launch-card" + (selected ? " is-selected" : "")}
                 key={biome.id}
                 type="button"
+                ref={biome === biomes[0] ? firstBiomeRef : undefined}
                 aria-pressed={selected}
                 onClick={() => onSelectBiome(biome.id)}
+                onKeyDown={trapDialogFocus}
                 style={{ "--region-accent": biome.palette.accent, "--region-sky": biome.palette.skyTop } as CSSProperties}
               >
                 <span className="region-launch-icon"><Icon size={17} /></span>
@@ -78,7 +112,7 @@ export function NatureverseLaunch({ phase, progress, biomes, selectedBiomeId, on
           <div className="region-launch-selection" aria-live="polite">
             {selectedBiome ? <><Sparkles size={14} /><span><strong>{selectedBiome.name}</strong> is ready to explore</span></> : <span>Select a field site to continue</span>}
           </div>
-          <button className="region-launch-begin" type="button" disabled={!selectedBiome} onClick={onBegin}>
+          <button className="region-launch-begin" type="button" disabled={!selectedBiome} onClick={onBegin} onKeyDown={trapDialogFocus}>
             {selectedBiome ? <>Begin in {selectedBiome.shortLabel}<ArrowRight size={16} /></> : <>Choose a region<ArrowRight size={16} /></>}
           </button>
         </footer>

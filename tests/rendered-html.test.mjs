@@ -35,7 +35,7 @@ test("server-renders the Natureverse experience and social metadata", async () =
   assert.match(html, /Natureverse/i);
   assert.match(html, /Ecosystem health/i);
   assert.match(html, /Ask the ecosystem/i);
-  assert.match(html, /Waking the world/i);
+  assert.match(html, /natureverse-launch-logo\.png/i);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/i);
 });
 
@@ -53,7 +53,8 @@ test("ships a loading sequence and requires a starting region", async () => {
   assert.match(launch, /Where would you like to begin\?/);
   assert.match(launch, /disabled=\{!selectedBiome\}/);
   assert.match(launch, /aria-pressed/);
-  assert.match(launch, /Waking the world/);
+  assert.match(launch, /natureverse-launch-logo\.png/);
+  assert.match(launch, /trapDialogFocus/);
 });
 
 test("ships data-driven species, relationships, and scenarios", async () => {
