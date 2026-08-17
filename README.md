@@ -6,7 +6,7 @@
 
 ## Demo path
 
-1. Watch the Natureverse logo wall open into the interactive field-site globe.
+1. Watch the Natureverse logo wall open into the interactive model-backed Earth.
 2. Select a marked region—from the Cascadian Rainforest to the Coral Triangle—and enter its scene.
 3. Orbit the living 3D ecosystem and tap an animal for its ecological role.
 4. Open **Field Guide** from the right edge to ask a question or try **“Bring rain”**, **“Clear the runoff”**, or **“Restore the forest corridor.”**
@@ -51,7 +51,7 @@ flowchart LR
   SCENE --> UI["Optional side tools, species panel, mobile dock"]
 ```
 
-- `src/components/NatureverseLaunch.tsx` owns the logo-wall loading sequence; `src/components/BiomeGlobeLaunch.tsx` owns the location-based globe selection.
+- `src/components/NatureverseLaunch.tsx` owns the logo-wall loading sequence; `src/components/BiomeGlobeLaunch.tsx` and `src/components/EarthSelectorScene.tsx` own the model-backed location selection.
 - `src/components/FieldGuideChat.tsx` translates supported natural-language prompts into simulation changes and ecological explanations.
 - `src/components/ConditionsPanel.tsx` exposes the same environment model through manual rainfall, water-quality, and habitat-cover controls.
 - `src/engine/ecosystemEngine.ts` calculates whole-system health, populations, water, and pollination.
@@ -61,6 +61,10 @@ flowchart LR
 ## Stack
 
 React, TypeScript, Three.js, React Three Fiber, Zustand, Cobe, and Lucide. The app is built with vinext and includes a Cloudflare Worker runtime, so it is not configured for static GitHub Pages hosting.
+
+## Asset credit
+
+The launch Earth model is [Low Poly Planet Earth by Jacobs Development](https://sketchfab.com/3d-models/low-poly-planet-earth-7b1dc4f802a54a6297e7a46888a85f77), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Natureverse adds interactive region beacons and interface overlays; see [ASSET_CREDITS.md](ASSET_CREDITS.md).
 
 ## Verification
 

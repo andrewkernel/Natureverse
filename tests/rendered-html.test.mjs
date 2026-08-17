@@ -40,12 +40,14 @@ test("server-renders the Natureverse experience and social metadata", async () =
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/i);
 });
 
-test("ships a logo wall, globe selection, and requires a chosen field site", async () => {
-  const [app, launch, globe, styles] = await Promise.all([
+test("ships a logo wall, model-backed Earth selection, and requires a chosen field site", async () => {
+  const [app, launch, globe, earth, styles, model] = await Promise.all([
     readFile(new URL("../src/NatureverseApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/NatureverseLaunch.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/BiomeGlobeLaunch.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/EarthSelectorScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../public/models/low-poly-planet-earth.glb", import.meta.url)),
   ]);
 
   assert.match(app, /type LaunchPhase = "loading" \| "globe" \| "exploring"/);
@@ -56,10 +58,15 @@ test("ships a logo wall, globe selection, and requires a chosen field site", asy
   assert.match(launch, /Opening the world atlas/);
   assert.match(globe, /Choose where to begin\./);
   assert.match(globe, /disabled=\{!selectedBiome\}/);
-  assert.match(globe, /markers: biomes\.map/);
-  assert.match(globe, /id: biome\.id/);
+  assert.match(globe, /<EarthSelectorScene/);
+  assert.match(globe, /Jacobs Development/);
   assert.match(globe, /aria-pressed/);
-  assert.match(styles, /position-anchor: var\(--globe-anchor\)/);
+  assert.match(earth, /useGLTF\(EARTH_MODEL_URL\)/);
+  assert.match(earth, /pointForLocation/);
+  assert.match(earth, /function RegionBeacon/);
+  assert.match(earth, /<Html transform occlude/);
+  assert.match(styles, /earth-marker-label/);
+  assert.equal(model.subarray(0, 4).toString("utf8"), "glTF");
   assert.match(launch, /natureverse-launch-logo\.png/);
 });
 
