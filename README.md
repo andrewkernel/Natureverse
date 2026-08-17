@@ -1,16 +1,16 @@
 # Natureverse
 
-**Natureverse** is a conversational 3D ecosystem explorer built for Oregon Hacks. Pick one of seven field sites, step into a living scene, then ask a Field Guide what is happening—or describe a weather or habitat change and watch the simulation respond.
+**Natureverse** is a conversational 3D ecosystem explorer built for Oregon Hacks. Choose one of seven real-world field sites from a living globe, step into its 3D ecosystem, then open the Field Guide when you want to ask a question or describe a change. Manual conditions are always available as a separate tool.
 
 ![Natureverse preview](public/og.png)
 
 ## Demo path
 
-1. Watch the Natureverse logo wall open into the field-site picker.
-2. Choose a starting region—from the Cascadian Rainforest to the Coral Triangle.
-3. Enter the field site and orbit the living 3D scene.
-4. Tap an animal for its ecological role, or ask the Field Guide a question.
-5. Try a prompt such as **“Bring rain”**, **“Clear the runoff”**, or **“Restore the forest corridor.”**
+1. Watch the Natureverse logo wall open into the interactive field-site globe.
+2. Select a marked region—from the Cascadian Rainforest to the Coral Triangle—and enter its scene.
+3. Orbit the living 3D ecosystem and tap an animal for its ecological role.
+4. Open **Field Guide** from the right edge to ask a question or try **“Bring rain”**, **“Clear the runoff”**, or **“Restore the forest corridor.”**
+5. Open **Conditions** to adjust rainfall, water quality, and habitat cover directly.
 
 The Field Guide is deliberately local and deterministic for the hackathon demo: prompts map to the same simulation controls that drive weather, habitat, water quality, and populations. A server-side Gemini adapter can be added later with a private `GEMINI_API_KEY`; no API key belongs in this client app or repository.
 
@@ -36,9 +36,11 @@ npm run start -- --port 3001
 
 ```mermaid
 flowchart LR
-  START["Loading + region selection"] --> BIOME["Seven biome configurations"]
+  START["Logo wall"] --> GLOBE["Interactive globe selection"]
+  GLOBE --> BIOME["Seven biome configurations"]
   BIOME --> STORE["Zustand simulation state"]
-  GUIDE["Conversational Field Guide"] --> STORE
+  GUIDE["Optional Field Guide"] --> STORE
+  CONDITIONS["Manual conditions"] --> STORE
   DATA["Species and relationship data"] --> ENGINE["Ecosystem engine"]
   STORE <--> ENGINE
   ENGINE --> WORLD["Biome world composer"]
@@ -46,11 +48,12 @@ flowchart LR
   TERRAIN["Shared terrain and water sampler"] --> WORLD
   WEATHER["Weather atmosphere"] --> WORLD
   WORLD --> SCENE["React Three Fiber scene"]
-  SCENE --> UI["Field Guide, species panel, mobile dock"]
+  SCENE --> UI["Optional side tools, species panel, mobile dock"]
 ```
 
-- `src/components/NatureverseLaunch.tsx` owns the loading sequence and starting-region choice.
+- `src/components/NatureverseLaunch.tsx` owns the logo-wall loading sequence; `src/components/BiomeGlobeLaunch.tsx` owns the location-based globe selection.
 - `src/components/FieldGuideChat.tsx` translates supported natural-language prompts into simulation changes and ecological explanations.
+- `src/components/ConditionsPanel.tsx` exposes the same environment model through manual rainfall, water-quality, and habitat-cover controls.
 - `src/engine/ecosystemEngine.ts` calculates whole-system health, populations, water, and pollination.
 - `src/data/biomes.ts` and `src/data/biomeFauna.ts` define seven distinct ecological stories and animal compositions.
 - `src/scene/` composes terrain, landmarks, weather, underwater habitat, movement, and procedural animal rigs.

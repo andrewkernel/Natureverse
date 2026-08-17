@@ -34,27 +34,33 @@ test("server-renders the Natureverse experience and social metadata", async () =
   assert.match(html, /property="og:image" content="https:\/\/natureverse\.test\/og\.png"/i);
   assert.match(html, /Natureverse/i);
   assert.match(html, /Ecosystem health/i);
-  assert.match(html, /Ask the ecosystem/i);
+  assert.match(html, /Field Guide/i);
+  assert.match(html, /Gathering living systems/i);
   assert.match(html, /natureverse-launch-logo\.png/i);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/i);
 });
 
-test("ships a loading sequence and requires a starting region", async () => {
-  const [app, launch] = await Promise.all([
+test("ships a logo wall, globe selection, and requires a chosen field site", async () => {
+  const [app, launch, globe, styles] = await Promise.all([
     readFile(new URL("../src/NatureverseApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../src/components/NatureverseLaunch.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/BiomeGlobeLaunch.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(app, /type LaunchPhase = "loading" \| "choose-region" \| "exploring"/);
-  assert.match(app, /setLaunchPhase\("choose-region"\)/);
+  assert.match(app, /type LaunchPhase = "loading" \| "globe" \| "exploring"/);
+  assert.match(app, /setLaunchPhase\("globe"\)/);
   assert.match(app, /previewStartBiome/);
   assert.match(app, /beginExploration/);
-  assert.match(app, /<NatureverseLaunch/);
-  assert.match(launch, /Where would you like to begin\?/);
-  assert.match(launch, /disabled=\{!selectedBiome\}/);
-  assert.match(launch, /aria-pressed/);
+  assert.match(app, /<BiomeGlobeLaunch/);
+  assert.match(launch, /Opening the world atlas/);
+  assert.match(globe, /Choose where to begin\./);
+  assert.match(globe, /disabled=\{!selectedBiome\}/);
+  assert.match(globe, /markers: biomes\.map/);
+  assert.match(globe, /id: biome\.id/);
+  assert.match(globe, /aria-pressed/);
+  assert.match(styles, /position-anchor: var\(--globe-anchor\)/);
   assert.match(launch, /natureverse-launch-logo\.png/);
-  assert.match(launch, /trapDialogFocus/);
 });
 
 test("ships data-driven species, relationships, and scenarios", async () => {
@@ -207,11 +213,14 @@ test("ships conversational controls and a resilient species selection path", asy
   }
 
   assert.match(app, /const speciesAccent: Record<SpeciesRole, NonNullable<SpeciesDetails\["accent"\]>>/);
-  assert.match(app, /accent: biomeSpecies \? speciesAccent\[biomeSpecies\.role\] : definition\.accent/);
-  assert.match(app, /type Drawer = "chat" \| "explore" \| "metrics" \| null/);
+  assert.match(app, /accent: biomeSpecies \? speciesAccent\[biomeSpecies\.id\] : definition\.accent/);
+  assert.match(app, /type Drawer = "chat" \| "conditions" \| "explore" \| "metrics" \| null/);
+  assert.match(app, /type SidePanel = "chat" \| "conditions" \| null/);
   assert.match(app, /chatReset/);
   assert.match(app, /idPrefix="desktop-field-guide"/);
   assert.match(app, /idPrefix="mobile-field-guide"/);
+  assert.match(app, /world-tool-rail/);
+  assert.match(app, /<ConditionsPanel/);
   assert.match(panel, /accentStyles\[species\.accent \?\? "leaf"\] \?\? accentStyles\.leaf/);
   assert.match(panel, /role="dialog"/);
   assert.match(guide, /Why are the fish struggling\?/);

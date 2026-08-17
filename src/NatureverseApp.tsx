@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Activity, Compass, Globe2, Leaf, RotateCcw, Search, Sparkles } from "lucide-react";
+import { Activity, CloudSun, Compass, Globe2, Leaf, MessageCircle, RotateCcw, Search, Sparkles, X } from "lucide-react";
 import { EcosystemScene } from "./scene/EcosystemScene";
 import { MetricsPanel, type EcosystemMetrics, type MetricStatus } from "./components/MetricsPanel";
 import { SpeciesPanel, type SpeciesDetails } from "./components/SpeciesPanel";
 import { BiomeSwitcher } from "./components/BiomeSwitcher";
 import { BiomeAtlas } from "./components/BiomeAtlas";
+import { BiomeGlobeLaunch } from "./components/BiomeGlobeLaunch";
+import { ConditionsPanel } from "./components/ConditionsPanel";
 import { SpeciesRail } from "./components/SpeciesRail";
 import { FieldGuideChat } from "./components/FieldGuideChat";
 import { NatureverseLaunch } from "./components/NatureverseLaunch";
@@ -29,8 +31,9 @@ const iconForSpecies = (type: string) => {
   return <Sparkles size={23} />;
 };
 
-type Drawer = "chat" | "explore" | "metrics" | null;
-type LaunchPhase = "loading" | "choose-region" | "exploring";
+type Drawer = "chat" | "conditions" | "explore" | "metrics" | null;
+type SidePanel = "chat" | "conditions" | null;
+type LaunchPhase = "loading" | "globe" | "exploring";
 
 const speciesAccent: Record<SpeciesRole, NonNullable<SpeciesDetails["accent"]>> = {
   deer: "amber", rabbit: "amber", bird: "sky", fish: "sky", frog: "leaf", bee: "amber", butterfly: "violet", dragonfly: "sky",
@@ -39,6 +42,7 @@ const speciesAccent: Record<SpeciesRole, NonNullable<SpeciesDetails["accent"]>> 
 export default function NatureverseApp() {
   const { controls, result, previousResult, selectedId, setControl, setSelectedId, reset } = useEcosystemStore();
   const [drawer, setDrawer] = useState<Drawer>(null);
+  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [activeBiomeId, setActiveBiomeId] = useState<BiomeId>(DEFAULT_BIOME_ID);
   const [atlasOpen, setAtlasOpen] = useState(false);
   const [chatReset, setChatReset] = useState(0);
@@ -58,7 +62,7 @@ export default function NatureverseApp() {
       const next = Math.min(100, Math.round(((now - startedAt) / duration) * 100));
       setLaunchProgress(next);
       if (next < 100) frame = window.requestAnimationFrame(run);
-      else revealTimer = window.setTimeout(() => setLaunchPhase("choose-region"), 80);
+      else revealTimer = window.setTimeout(() => setLaunchPhase("globe"), 80);
     };
     frame = window.requestAnimationFrame(run);
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(revealTimer); };
@@ -78,7 +82,13 @@ export default function NatureverseApp() {
   const handleReset = () => {
     setSelectedId(null);
     setDrawer(null);
+    setSidePanel(null);
     setChatReset((current) => current + 1);
+    reset();
+  };
+
+  const resetConditions = () => {
+    setSelectedId(null);
     reset();
   };
 
@@ -86,6 +96,7 @@ export default function NatureverseApp() {
     setActiveBiomeId(biomeId);
     setSelectedId(null);
     setDrawer(null);
+    setSidePanel(null);
     reset();
   };
 
@@ -126,7 +137,7 @@ export default function NatureverseApp() {
       category: biomeSpecies?.category ?? definition.type,
       habitat: biomeSpecies?.habitat ?? activeBiome.location,
       icon: iconForSpecies(definition.type),
-      accent: biomeSpecies ? speciesAccent[biomeSpecies.role] : definition.accent,
+      accent: biomeSpecies ? speciesAccent[biomeSpecies.id] : definition.accent,
       role: biomeSpecies?.role ?? definition.role,
       roleDescription: biomeSpecies?.description ?? definition.roleDescription,
       status: healthStatus(result.populations[definition.id] ?? 0),
@@ -166,7 +177,8 @@ export default function NatureverseApp() {
         <EcosystemScene biome={activeBiome} metrics={result.metrics} populations={result.populations} pollution={controls.pollution} drought={controls.drought} habitatLoss={controls.habitatLoss} invasive={controls.invasiveSpecies} selectedId={selectedId} connectionIds={connectionIds} onSelect={handleSpeciesSelect} />
       </div>
 
-      {launchPhase !== "exploring" && <NatureverseLaunch phase={launchPhase} progress={launchProgress} biomes={BIOMES} selectedBiomeId={startBiomeId} onSelectBiome={previewStartBiome} onBegin={beginExploration} />}
+      {launchPhase === "loading" && <NatureverseLaunch progress={launchProgress} />}
+      {launchPhase === "globe" && <BiomeGlobeLaunch biomes={BIOMES} selectedBiomeId={startBiomeId} onSelectBiome={previewStartBiome} onBegin={beginExploration} />}
 
       <div className="experience-interface" inert={launchPhase !== "exploring"} aria-hidden={launchPhase !== "exploring"}>
         <div className="top-vignette" aria-hidden="true" />
@@ -188,15 +200,26 @@ export default function NatureverseApp() {
         {atlasOpen && <BiomeAtlas biomes={BIOMES} activeId={activeBiomeId} onChange={(id) => { handleBiomeChange(id); setAtlasOpen(false); }} onClose={() => setAtlasOpen(false)} />}
         <BiomeSwitcher biomes={BIOMES.map((biome) => ({ id: biome.id, name: biome.name, shortLabel: biome.shortLabel, location: biome.location, iconKey: biome.iconKey, accent: biome.palette.accent }))} activeId={activeBiomeId} onChange={handleBiomeChange} />
 
-        <aside className="field-guide-slot">
-          <FieldGuideChat key={activeBiomeId + "-" + chatReset} idPrefix="desktop-field-guide" biome={activeBiome} controls={controls} result={result} onApplyConditions={applyFieldChanges} />
+        <aside className="world-tool-rail" aria-label="Field tools">
+          <button type="button" className={sidePanel === "chat" ? "active" : ""} onClick={() => setSidePanel(sidePanel === "chat" ? null : "chat")} aria-pressed={sidePanel === "chat"}>
+            <MessageCircle size={17} /><span>Field Guide</span>
+          </button>
+          <button type="button" className={sidePanel === "conditions" ? "active" : ""} onClick={() => setSidePanel(sidePanel === "conditions" ? null : "conditions")} aria-pressed={sidePanel === "conditions"}>
+            <CloudSun size={17} /><span>Conditions</span>
+          </button>
         </aside>
 
-        <div className="field-guide-scene-prompt"><Sparkles size={15} /><span>Describe a change. Watch the living system answer.</span></div>
+        {sidePanel && <aside className="world-side-panel" aria-label={sidePanel === "chat" ? "Field Guide" : "Manual environmental conditions"}>
+          <div className="world-side-panel-bar"><span>{sidePanel === "chat" ? "Field Guide" : "Manual conditions"}</span><button type="button" onClick={() => setSidePanel(null)} aria-label="Close side panel"><X size={16} /></button></div>
+          {sidePanel === "chat" && <FieldGuideChat key={activeBiomeId + "-" + chatReset} idPrefix="desktop-field-guide" biome={activeBiome} controls={controls} result={result} onApplyConditions={applyFieldChanges} className="field-guide-side-card" />}
+          {sidePanel === "conditions" && <ConditionsPanel biome={activeBiome} controls={controls} onControlChange={setControl} onReset={resetConditions} className="world-conditions-panel" />}
+        </aside>}
+
         <div className="explore-hint"><Compass size={15} /><span>Drag to explore</span><i /> <span>Tap a species to observe</span></div>
 
         <nav className="mobile-dock" aria-label="Natureverse tools">
           <button type="button" className={drawer === "chat" ? "active" : ""} onClick={() => setDrawer(drawer === "chat" ? null : "chat")}><Sparkles size={19} /><span>Ask</span></button>
+          <button type="button" className={drawer === "conditions" ? "active" : ""} onClick={() => setDrawer(drawer === "conditions" ? null : "conditions")}><CloudSun size={19} /><span>Weather</span></button>
           <button type="button" className={drawer === "explore" ? "active" : ""} onClick={() => setDrawer(drawer === "explore" ? null : "explore")}><Search size={19} /><span>Explore</span></button>
           <button type="button" className={drawer === "metrics" ? "active" : ""} onClick={() => setDrawer(drawer === "metrics" ? null : "metrics")}><Activity size={19} /><span>Health</span></button>
         </nav>
@@ -205,6 +228,7 @@ export default function NatureverseApp() {
           <div className="mobile-drawer field-guide-mobile-drawer">
             <div className="mobile-drawer-head"><div className="drawer-grabber" /><button type="button" onClick={() => setDrawer(null)} aria-label="Close tools">Close</button></div>
             {drawer === "chat" && <FieldGuideChat key={"mobile-" + activeBiomeId + "-" + chatReset} idPrefix="mobile-field-guide" biome={activeBiome} controls={controls} result={result} onApplyConditions={applyFieldChanges} className="field-guide-mobile" />}
+            {drawer === "conditions" && <ConditionsPanel biome={activeBiome} controls={controls} onControlChange={setControl} onReset={resetConditions} className="mobile-conditions-panel" />}
             {drawer === "explore" && <SpeciesRail species={focalSpecies} selectedId={selectedId} onSelect={(id) => { handleSpeciesSelect(id); setDrawer(null); }} />}
             {drawer === "metrics" && <MetricsPanel metrics={dashboardMetrics} compact />}
           </div>
